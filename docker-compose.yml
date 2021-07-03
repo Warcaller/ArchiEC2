@@ -1,0 +1,93 @@
+version: "3"
+
+services:
+  nginx:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - archimond7450_backend_static:/usr/share/nginx/html/archimond7450.com/backend
+      - archiemate_backend_static:/usr/share/nginx/html/archiemate.com/backend
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - archimond7450_backend
+      - archiemate_backend
+  archimond7450_backend:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./archimond7450.com/backend/Dockerfile
+    env_file:
+      - ./archimond7450.com/.env
+    entrypoint: /app/wsgi-entrypoint.sh
+    volumes:
+      - archimond7450_backend_static:/app/django_static
+      - archimond7450_backend_migrations_server:/app/server/migrations
+      - archimond7450_backend_migrations_accounts:/app/apps/accounts/migrations
+      - archimond7450_backend_migrations_schedule:/app/apps/schedule/migrations
+    expose:
+      - 8000
+    depends_on:
+      - archimond7450_db
+  archimond7450_db:
+    restart: unless-stopped
+    image: postgres:latest
+    env_file:
+      - ./archimond7450.com/.env
+    expose:
+      - 5432
+    volumes:
+      - ./archimond7450.com/db/data:/var/lib/postgresql/data
+  archiemate_chatbot:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./archiemate.com/chatbot/Dockerfile
+    env_file:
+      - ./archiemate.com/.env
+    entrypoint: python3 /chatbot/ArchieMateBot.py
+    volumes:
+      - ./archiemate.com/chatbot/logs:/chatbot/logs
+      - ./archiemate.com/chatbot/commands.json:/chatbot/commands.json
+  archiemate_backend:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./archiemate.com/backend/Dockerfile
+    env_file:
+      - ./archiemate.com/.env
+    entrypoint: /app/wsgi-entrypoint.sh
+    volumes:
+      - archiemate_backend_static:/app/django_static
+      - archiemate_backend_migrations_server:/app/server/migrations
+      - archiemate_backend_migrations_accounts:/app/apps/accounts/migrations
+      - archiemate_backend_migrations_points:/app/apps/points/migrations
+      - archiemate_backend_migrations_commands:/app/apps/commands/migrations
+    expose:
+      - 8000
+    depends_on:
+      - archiemate_db
+  archiemate_db:
+    restart: unless-stopped
+    image: postgres:latest
+    env_file:
+      - ./archiemate.com/.env
+    expose:
+      - 5432
+    volumes:
+      - ./archiemate.com/db/data:/var/lib/postgresql/data
+
+volumes:
+  archimond7450_backend_static:
+  archimond7450_backend_migrations_server:
+  archimond7450_backend_migrations_accounts:
+  archimond7450_backend_migrations_schedule:
+  archiemate_backend_static:
+  archiemate_backend_migrations_server:
+  archiemate_backend_migrations_accounts:
+  archiemate_backend_migrations_points:
+  archiemate_backend_migrations_commands:

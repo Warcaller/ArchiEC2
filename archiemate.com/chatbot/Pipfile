@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+twitch-python = "*"
+google-auth-oauthlib = "*"
+google-api-python-client = "*"
+regex = "*"
+requests = "*"
+websocket-client = "*"
+
+[dev-packages]
+pylint = "*"
+
+[requires]
+python_version = "3.9"

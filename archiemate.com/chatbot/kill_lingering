@@ -1,0 +1,3 @@
+#!/bin/sh
+
+while pgrep python; do kill -9 $(pgrep python); done
