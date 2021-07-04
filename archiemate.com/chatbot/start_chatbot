@@ -1,8 +1,0 @@
-#!/bin/sh
-
-client_id="h5z03797iz9d9btcjhjlxan9yay52u"
-client_secret="uls7uvtmloe4kyziswl9vjo7m84ldi"
-oauth="gimz2kskbtf9cbi7i3jl8kjmp2ehhb"
-
-CLIENT_ID=$client_id CLIENT_SECRET=$client_secret OAUTH=$oauth python ./ArchieMateBot.py
-while pgrep python; do kill -9 $(pgrep python); done

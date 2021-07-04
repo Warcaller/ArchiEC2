@@ -139,3 +139,9 @@ cython_debug/
 
 # commands.json is temporary and shouldn't be included in source control
 commands.json
+/debug_commands.py
+/debug_chatbot
+/kill_lingering
+/start_debug
+/start_chatbot
+/debug.py
