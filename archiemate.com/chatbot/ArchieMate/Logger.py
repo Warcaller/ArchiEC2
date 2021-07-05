@@ -30,7 +30,7 @@ def get_irc_logger(logger_name: str) -> logging.StreamHandler:
     irc_handler = TimedRotatingFileHandler(IRC_FILE, when="W0")
     irc_handler.setFormatter(FORMATTER)
     
-    irc_logger = logging.getLogger(logger_name)
+    irc_logger = logging.getLogger(f"IRC_{logger_name}")
     irc_logger.setLevel(logging.DEBUG)
     irc_logger.addHandler(irc_handler)
     irc_logger.propagate = False
