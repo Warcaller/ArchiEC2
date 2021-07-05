@@ -52,7 +52,7 @@ services:
     entrypoint: python3 /chatbot/ArchieMateBot.py
     volumes:
       - ./archiemate.com/chatbot/logs:/chatbot/logs
-      - ./archiemate.com/chatbot/commands.json:/chatbot/commands.json
+      - ./archiemate.com/chatbot/json/commands.json:/chatbot/json/commands.json
   archiemate_backend:
     restart: unless-stopped
     build:

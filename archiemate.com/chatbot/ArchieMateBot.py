@@ -29,14 +29,14 @@ def main():
   
   commands_json: dict = {}
   try:
-    with open("commands.json", "r") as file:
+    with open("json/commands.json", "r") as file:
       commands_json = json.load(file)
   except:
     logger.warning("Cannot parse commands.json")
   
   variables_json: dict = {}
   try:
-    with open("variables.json", "r") as file:
+    with open("json/variables.json", "r") as file:
       variables_json = json.load(file)
   except:
     logger.warning("Cannot parse variables.json")
