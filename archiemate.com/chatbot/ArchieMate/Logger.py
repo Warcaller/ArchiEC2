@@ -5,7 +5,7 @@ from logging.handlers import TimedRotatingFileHandler
 FORMATTER = logging.Formatter("%(asctime)-16s - %(name)24s - %(levelname)8s - %(message)s")
 LOG_FILE = "logs/ArchieMate.log"
 IRC_FILE = "logs/IRC.log"
-DEBUG = env.get("DEBUG").upper() in ("TRUE", "1")
+DEBUG = env.get("DEBUG", "0").upper() in ("TRUE", "1")
 
 def get_console_handler() -> logging.StreamHandler:
     console_handler = logging.StreamHandler(sys.stdout)

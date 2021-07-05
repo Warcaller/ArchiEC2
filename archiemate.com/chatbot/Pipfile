@@ -13,6 +13,10 @@ websocket-client = "*"
 
 [dev-packages]
 pylint = "*"
+pytest = "*"
+coverage = "*"
+pytest-randomly = "*"
+pytest-cov = "*"
 
 [requires]
 python_version = "3.9"

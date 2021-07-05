@@ -1,5 +1,5 @@
 import time
-from ArchieMate.TwitchIRC import Messages
+from ArchieMate.Twitch.IRC import Messages
 import timeit
 import sys
 import inspect

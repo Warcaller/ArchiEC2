@@ -11,8 +11,8 @@ logger = Logger.get_logger(__name__)
 irc_logger = Logger.get_irc_logger(__name__)
 
 
-def parse_tags(tags: str) -> Dict[str,str]:
-  if tags.endswith("@"): tags = tags[1:]
+def parse_tags(tags: str) -> Dict[str, str]:
+  if tags.startswith("@"): tags = tags[1:]
   return {} if tags is None or len(tags) == 0 else {one_tag[0]: one_tag[1] for tag in tags.split(";") if (one_tag := tag.split("="))}
 
 
@@ -20,12 +20,34 @@ def parse_badges(badges: str) -> Dict[str, int]:
   return {} if badges is None or len(badges) == 0 else {one_badge[0]: int(one_badge[1]) for badge in badges.split(",") if (one_badge := badge.split("/"))}
 
 
-def parse_badge_info(badge_info: str) -> Dict[str, str]:
-  return {} if badge_info is None or len(badge_info) == 0 else {one_badge_info[0]: one_badge_info[1] for badge_info_unsplitted in badge_info.split(",") if (one_badge_info := badge_info.split("/"))}
+def parse_badge_info(badge_info: str) -> Dict[str, int]:
+  return {} if badge_info is None or len(badge_info) == 0 else {one_badge_info[0]: int(one_badge_info[1]) for badge_info_unsplitted in badge_info.split(",") if (one_badge_info := badge_info_unsplitted.split("/"))}
 
 
-def escape_irc(display_name: str) -> str:
-  return "" if display_name is None or len(display_name) == 0 else display_name.replace("\\s", " ").replace("\\\\", "\\").replace("\\:", ";")
+def escape_irc_string(string: str) -> str:
+  result = ""
+  test = False
+  for character in string:
+    if not test:
+      if character == "\\":
+        test = True
+    else:
+      if character == ":":
+        result += ";"
+      elif character == "s":
+        result += " "
+      elif character == "\\":
+        result += "\\"
+      elif character in "rn":
+        pass
+      else:
+        result += character
+      test = False
+  return result
+
+
+def escape_irc(irc_text: str) -> str:
+  return "" if irc_text is None or len(irc_text) == 0 else escape_irc_string(irc_text)
 
 
 def parse_emote_range(emote_range: str) -> List[tuple]:
