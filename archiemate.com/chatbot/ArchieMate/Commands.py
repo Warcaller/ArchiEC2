@@ -133,6 +133,8 @@ class Commands:
     logger.debug(f"Commands.__init__ done -> {self.__dict__}")
   
   def find(self, channel: int, command: str) -> Function:
+    if channel not in self.commands:
+      self.commands[channel] = []
     found = [cmd for cmd in self.commands.get(channel, []) if cmd.name == command]
     return found[0] if len(found) > 0 else None
   
