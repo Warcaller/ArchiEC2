@@ -99,12 +99,21 @@ def main():
   del poller
   
   commands_json = commands.to_json()
+  logger.debug(f"commands_json: {commands_json}")
   try:
-    with open("commands.json", "w") as file:
+    with open("json/commands.json", "w") as file:
       json.dump(commands_json, file)
   except:
-    logger.warning("Cannot write to commands.json")
+    logger.exception("Cannot write to commands.json")
     pass
+  
+  variables_json = variables.to_json()
+  logger.debug(f"variables_json: {variables_json}")
+  try:
+    with open("json/variables.json", "w") as file:
+      json.dump(variables_json, file)
+  except:
+    logger.exception("Cannot write to variables.json")
   
   return 0
 
