@@ -12,7 +12,7 @@ irc_logger = Logger.get_irc_logger(__name__)
 
 
 def parse_tags(tags: str) -> Dict[str, str]:
-  if tags.startswith("@"): tags = tags[1:]
+  if tags is not None and tags.startswith("@"): tags = tags[1:]
   return {} if tags is None or len(tags) == 0 else {one_tag[0]: one_tag[1] for tag in tags.split(";") if (one_tag := tag.split("="))}
 
 
@@ -27,22 +27,25 @@ def parse_badge_info(badge_info: str) -> Dict[str, int]:
 def escape_irc_string(string: str) -> str:
   result = ""
   test = False
-  for character in string:
-    if not test:
-      if character == "\\":
-        test = True
-    else:
-      if character == ":":
-        result += ";"
-      elif character == "s":
-        result += " "
-      elif character == "\\":
-        result += "\\"
-      elif character in "rn":
-        pass
+  if string is not None:
+    for character in string:
+      if not test:
+        if character == "\\":
+          test = True
+        else:
+          result += character
       else:
-        result += character
-      test = False
+        if character == ":":
+          result += ";"
+        elif character == "s":
+          result += " "
+        elif character == "\\":
+          result += "\\"
+        elif character in "rn":
+          pass
+        else:
+          result += character
+        test = False
   return result
 
 
@@ -51,7 +54,7 @@ def escape_irc(irc_text: str) -> str:
 
 
 def parse_emote_range(emote_range: str) -> List[tuple]:
-  return [] if emote_range is None or len(emote_range) == 0 else [(int(one_range[0]), int(one_range[1]) - int(one_range[0])) for rng in emote_range.split(",") if (one_range := rng.split("-"))]
+  return [] if emote_range is None or len(emote_range) == 0 else [(int(one_range[0]), int(one_range[1]) - int(one_range[0]) + 1) for rng in emote_range.split(",") if (one_range := rng.split("-"))]
 
 
 def parse_emotes(emotes: str) -> Dict[int, List[tuple]]:
@@ -127,7 +130,6 @@ class NoticeMessageId(Enum):
   MessageFacebook = "msg_facebook"
   MessageFollowersOnly = "msg_followersonly"
   MessageFollowersOnlyFollowed = "msg_followersonly_followed"
-  MessageFollowersOnlyZero = "msg_followersonly_zero"
   MessageR9K = "msg_r9k"
   MessageRateLimit = "msg_ratelimit"
   MessageRejected = "msg_rejected"
@@ -220,7 +222,7 @@ class Message:
 
 
 class Notice(Message):
-  regex = re.compile(r":tmi\.twitch\.tv NOTICE \* :(?P<message>.*)")
+  regex = re.compile(r":tmi\.twitch\.tv\sNOTICE\s\*\s:(?P<message>.*)")
   
   @staticmethod
   def match(message: str):
@@ -238,7 +240,7 @@ class Notice(Message):
 
 
 class Generic(Message):
-  regex = re.compile(r":tmi\.twitch\.tv (?P<message_number>\d{3}) (?P<bot_user>\S+) :(?P<message>.*)")
+  regex = re.compile(r":tmi\.twitch\.tv\s(?P<message_number>\d{3})\s(?P<bot_user>\S+)\s:(?P<message>.*)")
   
   @staticmethod
   def match(message: str):
@@ -298,21 +300,26 @@ class PrivMsg(Message):
     self.badge_info = parse_badge_info(tags.get("badge-info", ""))
     self.badges = parse_badges(tags.get("badges", ""))
     self.bits = int(tags.get("bits", "0"))
+    self.client_nonce = tags.get("client-nonce", "")
     self.color = tags.get("color", "#FFFFFF")
     self.display_name = escape_irc(tags.get("display-name", ""))
     self.emotes = parse_emotes(tags.get("emotes", ""))
+    self.flags = tags.get("flags", "")
     self.message_id = tags.get("id", "")
-    self.mod = tags.get("mod", "0") == "1"
-    self.reply_parent_message_id = tags.get("reply-parent-message-id", None)
-    self.reply_parent_user_id = tags.get("reply-parent-user-id", None)
+    self.mod = tags.get("mod", "-1") == "1" if tags.get("mod", "-1") != "-1" else None
+    self.reply_parent_message_id = tags.get("reply-parent-msg-id", None)
+    self.reply_parent_user_id = int(tags.get("reply-parent-user-id", -1)) if tags.get("reply-parent-user-id", "-1") != "-1" else None
     self.reply_parent_user_login = tags.get("reply-parent-user-login", None)
     self.reply_parent_display_name = tags.get("reply-parent-display-name", None)
-    self.reply_parent_message_body = tags.get("reply-parent-msg-body", None)
-    self.room_id = int(tags.get("room-id", "0"))
+    self.reply_parent_message_body = escape_irc(tags.get("reply-parent-msg-body", None)) if tags.get("reply-parent-msg-body", None) is not None else None
+    self.room_id = int(tags.get("room-id", "-1"))
+    self.subscriber = tags.get("subscriber", "-1") == "1" if tags.get("subscriber", "-1") != "-1" else None
     tmi_sent_ts = int(tags.get("tmi-sent-ts", "0"))
-    self.tmi_sent_timestamp = datetime.datetime.utcfromtimestamp(tmi_sent_ts // 1000).replace(microsecond=tmi_sent_ts % (1000 * 1000))
-    self.user_id = int(tags.get("user-id", "0"))
+    self.tmi_sent_timestamp = datetime.datetime.utcfromtimestamp(tmi_sent_ts // 1000).replace(microsecond=tmi_sent_ts % (1000 * 1000)) if tmi_sent_ts > 0 else None
+    self.turbo = tags.get("turbo", "-1") == "1" if tags.get("turbo", "-1") != "-1" else None
+    self.user_id = int(tags.get("user-id", "-1"))
     self.user = group_dict["user"]
+    self.user_type = tags.get("user-type", "")
     self.channel = group_dict["channel"]
     self.message = group_dict["message"]
     logger.debug(f"Result: {self.__dict__}")
@@ -357,7 +364,7 @@ class Part(Message):
 
 
 class CapabilityAcknowledge(Message):
-  regex = re.compile(r"^CAP\s\*\sACK\s(?P<capabilities>(\S+\s?)+)$")
+  regex = re.compile(r"^:tmi\.twitch\.tv\sCAP\s\*\sACK\s:(?P<capabilities>.*)$")
   
   @staticmethod
   def match(message: str):
@@ -391,7 +398,7 @@ class HostTarget(Message):
     
     self.channel = group_dict["channel"]
     self.hosted_channel = group_dict["hosted_channel"] if group_dict["hosted_channel"] != "-" else ""
-    self.viewers = int(group_dict["viewers"]) if group_dict["viewers"] not in ("-", "", None) else 0
+    self.viewers = int(group_dict["viewers"]) if group_dict["viewers"] not in ("-", "", None) else None
 
 
 class NoticeCommands(Message):
@@ -399,7 +406,7 @@ class NoticeCommands(Message):
   
   @staticmethod
   def match(message: str):
-    regex = Notice.regex.match(message)
+    regex = NoticeCommands.regex.match(message)
     logger.debug(f"NoticeCommands.match(message: '{message}') -> {regex}")
     return regex
   
@@ -410,7 +417,7 @@ class NoticeCommands(Message):
     Message.__init__(self)
     
     tags = parse_tags(group_dict["tags"])
-    self.msg_id = NoticeMessageId(tags["msg_id"])
+    self.message_id = NoticeMessageId(tags["msg-id"])
     self.channel = group_dict["channel"]
     self.message = group_dict["message"]
 
@@ -445,9 +452,12 @@ class ClearChat(Message):
     Message.__init__(self)
     
     tags = parse_tags(group_dict["tags"])
-    self.ban_duration = group_dict.get("ban-duration", "")
+    self.ban_duration = tags.get("ban-duration", None)
+    self.room_id = int(tags.get("room-id", -1)) if tags.get("room-id") != -1 else None
+    tmi_sent_ts = int(tags.get("tmi-sent-ts", "0"))
+    self.tmi_sent_timestamp = datetime.datetime.utcfromtimestamp(tmi_sent_ts // 1000).replace(microsecond=tmi_sent_ts % (1000 * 1000)) if tmi_sent_ts > 0 else None
     self.channel = group_dict["channel"]
-    self.user = group_dict["user"]
+    self.user = group_dict.get("user", None)
 
 
 class ClearMessage(Message):
@@ -463,7 +473,7 @@ class ClearMessage(Message):
     group_dict = regex.groupdict()
     
     logger.debug(f"ClearMessage.__init__(regex: {group_dict})")
-    Message.__init(self)
+    Message.__init__(self)
     
     tags = parse_tags(group_dict["tags"])
     self.user = tags.get("login", "")
@@ -485,7 +495,7 @@ class GlobalUserState(Message):
     group_dict = regex.groupdict()
     
     logger.debug(f"Global.__init__(regex: {group_dict})")
-    Message.__init(self)
+    Message.__init__(self)
     
     tags = parse_tags(group_dict["tags"])
     self.badge_info = parse_badge_info(tags.get("badge-info", ""))
@@ -493,7 +503,9 @@ class GlobalUserState(Message):
     self.color = tags.get("color", "#FFFFFF")
     self.display_name = tags.get("display-name", "")
     self.emote_sets = parse_emote_sets(tags.get("emote-sets", ""))
-    self.user_id = tags.get("user-id", "")
+    self.turbo = tags.get("turbo", "-1") == "1" if tags.get("turbo", "-1") != "-1" else None
+    self.user_id = int(tags.get("user-id", "-1"))
+    self.user_type = tags.get("user-type", "")
 
 
 class RoomState(Message):
@@ -545,11 +557,11 @@ class UserNotice(Message):
     self.user = tags.get("login", "")
     self.message = group_dict.get("message", "")
     self.mod = tags.get("mod", "-1") == "1" if tags.get("mod", "-1") != "-1" else None
-    self.room_id = tags.get("room-id", "")
+    self.room_id = tags.get("room-id", "-1")
     self.system_message = tags.get("system-msg", "")
     tmi_sent_ts = int(tags.get("tmi-sent-ts", "0"))
     self.tmi_sent_timestamp = datetime.datetime.utcfromtimestamp(tmi_sent_ts // 1000).replace(microsecond=tmi_sent_ts % (1000 * 1000))
-    self.user_id = int(tags.get("user-id", "0"))
+    self.user_id = int(tags.get("user-id", "-1"))
 
 
 class SubPlan(Enum):
