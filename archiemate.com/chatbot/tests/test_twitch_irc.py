@@ -477,4 +477,64 @@ def test_message_global_user_state():
   assert(message_global_user_state.turbo == 0)
   assert(message_global_user_state.user_id == 1337)
   assert(message_global_user_state.user_type == "admin")
-  
+
+
+def test_message_room_state_join_in_channel():
+  message = "@emote-only=0;followers-only=0;r9k=0;slow=0;subs-only=0 :tmi.twitch.tv ROOMSTATE #dallas"
+  regex = TwitchIRC.RoomState.match(message)
+  assert(regex is not None)
+  message_room_state: TwitchIRC.RoomState = TwitchIRC.RoomState(regex)
+  assert(message_room_state.emote_only == 0)
+  assert(message_room_state.followers_only == 0)
+  assert(message_room_state.r9k == 0)
+  assert(message_room_state.slow == 0)
+  assert(message_room_state.subs_only == 0)
+  assert(message_room_state.channel == "dallas")
+
+
+def test_message_room_state_slow_mode_is_set():
+  message = "@slow=10 :tmi.twitch.tv ROOMSTATE #dallas"
+  regex = TwitchIRC.RoomState.match(message)
+  assert(regex is not None)
+  message_room_state: TwitchIRC.RoomState = TwitchIRC.RoomState(regex)
+  assert(message_room_state.emote_only is None)
+  assert(message_room_state.followers_only is None)
+  assert(message_room_state.r9k is None)
+  assert(message_room_state.slow == 10)
+  assert(message_room_state.subs_only is None)
+  assert(message_room_state.channel == "dallas")
+
+
+def test_message_user_notice_resub():
+  message = "@badge-info=;badges=staff/1,broadcaster/1,turbo/1;color=#008000;display-name=ronni;" \
+  "emotes=;id=db25007f-7a18-43eb-9379-80131e44d633;login=ronni;mod=0;msg-id=resub;msg-param-cumulative-months=6;" \
+  "msg-param-streak-months=2;msg-param-should-share-streak=1;msg-param-sub-plan=Prime;" \
+  "msg-param-sub-plan-name=Prime;room-id=1337;subscriber=1;system-msg=ronni\\shas\\ssubscribed\\sfor\\s6\\smonths!;" \
+  "tmi-sent-ts=1507246572675;turbo=1;user-id=1337;user-type=staff :tmi.twitch.tv USERNOTICE #dallas :Great stream -- keep it up!"
+  regex = TwitchIRC.UserNotice.match(message)
+  assert(regex is not None)
+  boolean: bool = TwitchIRC.UserNoticeResubscription.match(regex)
+  assert(boolean == True)
+  message_user_notice: TwitchIRC.UserNoticeResubscription = TwitchIRC.UserNoticeResubscription(regex)
+  assert(message_user_notice.badge_info == {})
+  assert(message_user_notice.badges == {"staff": 1, "broadcaster": 1, "turbo": 1})
+  assert(message_user_notice.color == "#008000")
+  assert(message_user_notice.display_name == "ronni")
+  assert(message_user_notice.emotes == {})
+  assert(message_user_notice.message_id == "db25007f-7a18-43eb-9379-80131e44d633")
+  assert(message_user_notice.user == "ronni")
+  assert(message_user_notice.mod == False)
+  assert(message_user_notice.cumulative_months == 6)
+  assert(message_user_notice.streak_months == 2)
+  assert(message_user_notice.should_share_streak == True)
+  assert(message_user_notice.sub_plan == TwitchIRC.SubPlan.Prime)
+  assert(message_user_notice.sub_plan_name == "Prime")
+  assert(message_user_notice.room_id == 1337)
+  assert(message_user_notice.subscriber == True)
+  assert(message_user_notice.system_message == "ronni has subscribed for 6 months!")
+  assert(message_user_notice.tmi_sent_timestamp == (datetime.datetime.utcfromtimestamp(1507246572675 // 1000).replace(microsecond=1507246572675 % (1000 * 1000))))
+  assert(message_user_notice.turbo == True)
+  assert(message_user_notice.user_id == 1337)
+  assert(message_user_notice.user_type == "staff")
+  assert(message_user_notice.channel == "dallas")
+  assert(message_user_notice.message == "Great stream -- keep it up!")

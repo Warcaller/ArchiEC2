@@ -527,8 +527,8 @@ class RoomState(Message):
     self.emote_only = tags.get("emote-only", "-1") == "1" if tags.get("emote-only", "-1") != "-1" else None
     self.followers_only = tags.get("followers-only", "-1") == "1" if tags.get("followers-only", "-1") != "-1" else None
     self.r9k = tags.get("r9k", "-1") == "1" if tags.get("r9k", "-1") != "-1" else None
-    self.slow = tags.get("slow", "-1") == "1" if tags.get("slow", "-1") != "-1" else None
-    self.subs_only = tags.get("subs-only", "-1") == "1" if tags.get("subs-only", "-1") else None
+    self.slow = int(tags.get("slow", "-1")) if tags.get("slow", "-1") != "-1" else None
+    self.subs_only = tags.get("subs-only", "-1") == "1" if tags.get("subs-only", "-1") != "-1" else None
     self.channel = group_dict["channel"]
 
 
@@ -557,11 +557,15 @@ class UserNotice(Message):
     self.user = tags.get("login", "")
     self.message = group_dict.get("message", "")
     self.mod = tags.get("mod", "-1") == "1" if tags.get("mod", "-1") != "-1" else None
-    self.room_id = tags.get("room-id", "-1")
-    self.system_message = tags.get("system-msg", "")
+    self.room_id = int(tags.get("room-id", "-1"))
+    self.subscriber = tags.get("subscriber", "-1") == "1" if tags.get("subscriber", "-1") != "-1" else None
+    self.system_message = escape_irc(tags.get("system-msg", ""))
     tmi_sent_ts = int(tags.get("tmi-sent-ts", "0"))
     self.tmi_sent_timestamp = datetime.datetime.utcfromtimestamp(tmi_sent_ts // 1000).replace(microsecond=tmi_sent_ts % (1000 * 1000))
+    self.turbo = tags.get("turbo", "-1") == "1" if tags.get("turbo", "-1") != "-1" else None
     self.user_id = int(tags.get("user-id", "-1"))
+    self.user_type = tags.get("user-type", "")
+    self.channel = group_dict["channel"]
 
 
 class SubPlan(Enum):
@@ -572,7 +576,8 @@ class SubPlan(Enum):
 
 class UserNoticeSubscription(UserNotice):
   @staticmethod
-  def match(group_dict: Dict[str, str]) -> bool:
+  def match(regex) -> bool:
+    group_dict = regex.groupdict()
     result = group_dict["msg-id"] == "sub"
     logger.debug(f"UserNoticeSubscription.match(group_dict: {group_dict}) -> {result}")
     return result
@@ -593,8 +598,10 @@ class UserNoticeSubscription(UserNotice):
 
 class UserNoticeResubscription(UserNotice):
   @staticmethod
-  def match(group_dict: Dict[str, str]) -> bool:
-    result = group_dict["msg-id"] == "resub"
+  def match(regex) -> bool:
+    group_dict = regex.groupdict()
+    tags = parse_tags(group_dict["tags"])
+    result = tags["msg-id"] == "resub"
     logger.debug(f"UserNoticeResubscription.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -606,7 +613,7 @@ class UserNoticeResubscription(UserNotice):
     
     tags = parse_tags(group_dict["tags"])
     self.cumulative_months = int(tags.get("msg-param-cumulative-months", "1"))
-    self.should_share_streak = tags["msg-param-should-share-streak", "0"] == "1"
+    self.should_share_streak = tags.get("msg-param-should-share-streak", "0") == "1"
     self.streak_months = int(tags.get("msg-param-streak-months", "0"))
     self.sub_plan = SubPlan(tags.get("msg-param-sub-plan", "1000"))
     self.sub_plan_name = tags.get("msg-param-sub-plan-name", "")
@@ -614,8 +621,10 @@ class UserNoticeResubscription(UserNotice):
 
 class UserNoticeSubscriptionGift(UserNotice):
   @staticmethod
-  def match(group_dict: Dict[str, str]) -> bool:
-    result = group_dict["msg-id"] == "subgift"
+  def match(regex) -> bool:
+    group_dict = regex.groupdict()
+    tags = parse_tags(group_dict["tags"])
+    result = tags["msg-id"] == "subgift"
     logger.debug(f"UserNoticeSubscriptionGift.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -637,8 +646,10 @@ class UserNoticeSubscriptionGift(UserNotice):
 
 class UserNoticeAnonymousSubscriptionGift(UserNotice):
   @staticmethod
-  def match(group_dict: Dict[str, str]) -> bool:
-    result = group_dict["msg-id"] == "subgift"
+  def match(regex) -> bool:
+    group_dict = regex.groupdict()
+    tags = parse_tags(group_dict["tags"])
+    result = tags["msg-id"] == "subgift"
     logger.debug(f"UserNoticeAnonymousSubscriptionGift.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -660,8 +671,10 @@ class UserNoticeAnonymousSubscriptionGift(UserNotice):
 
 class UserNoticeSubscriptionMysteryGift(UserNotice):
   @staticmethod
-  def match(group_dict: Dict[str, str]) -> bool:
-    result = group_dict["msg-id"] == "submysterygift"
+  def match(regex) -> bool:
+    group_dict = regex.groupdict()
+    tags = parse_tags(group_dict["tags"])
+    result = tags["msg-id"] == "submysterygift"
     logger.debug(f"UserNoticeSubscriptionMysteryGift.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -676,8 +689,10 @@ class UserNoticeSubscriptionMysteryGift(UserNotice):
 
 class UserNoticeGiftPaidUpgrade(UserNotice):
   @staticmethod
-  def match(group_dict: Dict[str, str]) -> bool:
-    result = group_dict["msg-id"] == "giftpaidupgrade"
+  def match(regex) -> bool:
+    group_dict = regex.groupdict()
+    tags = parse_tags(group_dict["tags"])
+    result = tags["msg-id"] == "giftpaidupgrade"
     logger.debug(f"UserNoticeGiftPaidUpgrade.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -696,8 +711,10 @@ class UserNoticeGiftPaidUpgrade(UserNotice):
 
 class UserNoticeAnonymousGiftPaidUpgrade(UserNotice):
   @staticmethod
-  def match(group_dict: Dict[str, str]) -> bool:
-    result = group_dict["msg-id"] == "giftpaidupgrade"
+  def match(regex) -> bool:
+    group_dict = regex.groupdict()
+    tags = parse_tags(group_dict["tags"])
+    result = tags["msg-id"] == "giftpaidupgrade"
     logger.debug(f"UserNoticeAnonymousGiftPaidUpgrade.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -714,8 +731,10 @@ class UserNoticeAnonymousGiftPaidUpgrade(UserNotice):
 
 class UserNoticeRewardGift(UserNotice):
   @staticmethod
-  def match(group_dict: Dict[str, str]) -> bool:
-    result = group_dict["msg-id"] == "rewardgift"
+  def match(regex) -> bool:
+    group_dict = regex.groupdict()
+    tags = parse_tags(group_dict["tags"])
+    result = tags["msg-id"] == "rewardgift"
     logger.debug(f"UserNoticeRewardGift.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -730,8 +749,10 @@ class UserNoticeRewardGift(UserNotice):
 
 class UserNoticeRaid(UserNotice):
   @staticmethod
-  def match(group_dict: Dict[str, str]) -> bool:
-    result = group_dict["msg-id"] == "raid"
+  def match(regex) -> bool:
+    group_dict = regex.groupdict()
+    tags = parse_tags(group_dict["tags"])
+    result = tags["msg-id"] == "raid"
     logger.debug(f"UserNoticeRaid.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -742,15 +763,17 @@ class UserNoticeRaid(UserNotice):
     UserNotice.__init__(self, regex)
     
     tags = parse_tags(group_dict["tags"])
-    display_name = tags["msg-param-displayName"]
-    login = tags["msg-param-login"]
-    viewer_count = int(tags.get("msg-param-viewerCount", "0"))
+    self.display_name = tags["msg-param-displayName"]
+    self.login = tags["msg-param-login"]
+    self.viewer_count = int(tags.get("msg-param-viewerCount", "0"))
     
 
 class UserNoticeUnraid(UserNotice):
   @staticmethod
-  def match(group_dict: Dict[str, str]) -> bool:
-    result = group_dict["msg-id"] == "unraid"
+  def match(regex) -> bool:
+    group_dict = regex.groupdict()
+    tags = parse_tags(group_dict["tags"])
+    result = tags["msg-id"] == "unraid"
     logger.debug(f"UserNoticeUnraid.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -765,8 +788,10 @@ class UserNoticeUnraid(UserNotice):
 
 class UserNoticeRitual(UserNotice):
   @staticmethod
-  def match(group_dict: Dict[str, str]) -> bool:
-    result = group_dict["msg-id"] == "ritual"
+  def match(regex) -> bool:
+    group_dict = regex.groupdict()
+    tags = parse_tags(group_dict["tags"])
+    result = tags["msg-id"] == "ritual"
     logger.debug(f"UserNoticeRitual.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -782,8 +807,10 @@ class UserNoticeRitual(UserNotice):
 
 class UserNoticeBitsBadgeTier(UserNotice):
   @staticmethod
-  def match(group_dict: Dict[str, str]) -> bool:
-    result = group_dict["msg-id"] == "bitsbadgetier"
+  def match(regex) -> bool:
+    group_dict = regex.groupdict()
+    tags = parse_tags(group_dict["tags"])
+    result = tags["msg-id"] == "bitsbadgetier"
     logger.debug(f"UserNoticeBitsBadgeTier.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -843,7 +870,9 @@ def decode_message(message: str) -> Message:
           UserNoticeRaid, UserNoticeUnraid, UserNoticeRitual, UserNoticeBitsBadgeTier,
           UserNoticeSubscriptionMysteryGift, UserNoticeGiftPaidUpgrade, UserNoticeAnonymousGiftPaidUpgrade, UserNoticeRewardGift
         ):
-          result = message_class(regex)
+          if user_notice_type.match(regex):
+            result = user_notice_type(regex)
+            break
       else:
         result = message_class(regex)
       break
