@@ -453,8 +453,8 @@ class ClearChat(Message):
     
     tags: Dict[str, str] = parse_tags(group_dict["tags"])
     self.ban_duration: Optional[str] = tags.get("ban-duration", None)
-    self.room_id = int(tags.get("room-id", -1)) if tags.get("room-id") != -1 else None
-    tmi_sent_ts = int(tags.get("tmi-sent-ts", "0"))
+    self.room_id: int = int(tags.get("room-id", -1)) if tags.get("room-id") != -1 else None
+    tmi_sent_ts: int = int(tags.get("tmi-sent-ts", "0"))
     self.tmi_sent_timestamp: Optional[datetime.datetime] = datetime.datetime.utcfromtimestamp(tmi_sent_ts // 1000).replace(microsecond=tmi_sent_ts % (1000 * 1000)) if tmi_sent_ts > 0 else None
     self.channel: str = group_dict["channel"]
     self.user: Optional[str] = group_dict.get("user", None)
