@@ -4,6 +4,7 @@
 import json
 import sys
 from os import environ as env
+from typing import List, Dict, Optional, Callable
 
 from ArchieMate import Logger
 import ArchieMate.Twitch.IRC as TwitchIRC
@@ -13,17 +14,17 @@ import ArchieMate.Variables as Variables
 
 logger = Logger.get_logger(__name__)
 
-def main():
-  ARCHI_USER_ID = 147113965
-  client_id = env.get("CLIENT_ID")
-  client_secret = env.get("CLIENT_SECRET")
-  oauth = env.get("OAUTH")
-  channel = "archimond7450"
-  bot_name = "archiemate"
+def main() -> int:
+  ARCHI_USER_ID: int = 147113965
+  client_id: str = env.get("CLIENT_ID")
+  client_secret: str = env.get("CLIENT_SECRET")
+  oauth: str = env.get("OAUTH")
+  channel: str = "archimond7450"
+  bot_name: str = "archiemate"
   
-  poller = Poller.Poller()
+  poller: Poller.Poller = Poller.Poller()
   
-  twitch_ircs = {
+  twitch_ircs: Dict[int, TwitchIRC.IRC] = {
     channel: TwitchIRC.IRC(bot_name, channel, oauth, poller)
   }
   
@@ -41,31 +42,31 @@ def main():
   except:
     logger.warning("Cannot parse variables.json")
   
-  commands = Commands.Commands(commands_json)
-  variables = Variables.Variables(variables_json)
+  commands: Commands.Commands = Commands.Commands(commands_json)
+  variables: Variables.Variables = Variables.Variables(variables_json)
   
-  DEBUG = env.get("DEBUG", "0") != "0"
+  DEBUG: bool = env.get("DEBUG", "0") != "0"
   def send_debug_message_off(irc, message): pass
   def send_debug_message_on(irc, message):
     irc.send_message(message)
-  send_debug_message = send_debug_message_on if DEBUG else send_debug_message_off
+  send_debug_message: Callable = send_debug_message_on if DEBUG else send_debug_message_off
   
   logger.debug("START")
   
-  done = False
+  done: bool = False
   while not done:
     # Timers - update from DB, write timer to IRC
     
     # Retrieve message from Twitch IRC
     for channel in twitch_ircs.keys():
-      irc = twitch_ircs[channel]
+      irc: TwitchIRC.IRC = twitch_ircs[channel]
       if msg := irc.recv():
         decoded_message = TwitchIRC.decode_message(msg)
         if isinstance(decoded_message, TwitchIRC.PrivMsg):
           priv_msg: TwitchIRC.PrivMsg = decoded_message
           send_debug_message(irc, f"/me received: '{priv_msg.message}'")
           
-          channel_variables = variables.get_variables(priv_msg.room_id)
+          channel_variables: Dict[str, str] = variables.get_variables(priv_msg.room_id)
           
           if detected_command := Commands.detect_command(priv_msg.message):
             chatters, command, arguments = detected_command
@@ -90,7 +91,7 @@ def main():
           irc.send_pong(ping.server)
   
   for channel in twitch_ircs.keys():
-    irc = twitch_ircs[channel]
+    irc: TwitchIRC.IRC = twitch_ircs[channel]
     irc.send_message("ArchieMate is temporarily shutting down. HeyGuys")
   
   logger.debug("END")
@@ -98,7 +99,7 @@ def main():
   del twitch_ircs
   del poller
   
-  commands_json = commands.to_json()
+  commands_json: Dict[int, List[Dict[str, str]]] = commands.to_json()
   logger.debug(f"commands_json: {commands_json}")
   try:
     with open("json/commands.json", "w") as file:
@@ -107,7 +108,7 @@ def main():
     logger.exception("Cannot write to commands.json")
     pass
   
-  variables_json = variables.to_json()
+  variables_json: Dict[int, List[Dict[str, str]]] = variables.to_json()
   logger.debug(f"variables_json: {variables_json}")
   try:
     with open("json/variables.json", "w") as file:
@@ -120,6 +121,6 @@ def main():
 
 if __name__ == '__main__':
   logger.debug("STARTED")
-  code = main()
+  code: int = main()
   logger.debug("TERMINATED")
   sys.exit(code)

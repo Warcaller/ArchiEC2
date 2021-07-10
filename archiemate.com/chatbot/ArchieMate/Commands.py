@@ -1,13 +1,13 @@
-__empty_func__ = lambda *args: None
-__globals_commands__ = globals()
-
 import ArchieMate.Logger as Logger
-from types import FunctionType, CodeType
+from types import Callable, Dict, List, Optional, FunctionType, CodeType
 from importlib import import_module
 from enum import Enum
 import regex as re
 
-logger = Logger.get_logger(__name__)
+__empty_func__: Callable = lambda *args: None
+__globals_commands__: Dict[str, any] = globals()
+
+logger: Logger = Logger.get_logger(__name__)
 
 __command_regex__ = re.compile(r"^(?P<chatters>(@\w+\s*,?\s*)*)!(?P<command>\w+)(?P<arguments>.*)$")
 __command_function_regex__ = re.compile(r"^(?P<action>\w+)\s+!?(?P<command>\S+)(\s+(type=(?P<type>\w+)\s+))?(?P<response>.*)?$")
@@ -16,9 +16,9 @@ def detect_command(message: str) -> tuple[list[str], str, str]:
   if regex := __command_regex__.match(message):
     group_dict = regex.groupdict()
     
-    chatters = ", ".join("".join(group_dict["chatters"].split()).split(",")) if "chatters" in group_dict else ""
-    command = group_dict["command"].lower()
-    arguments = group_dict["arguments"].strip() if "arguments" in group_dict else ""
+    chatters: str = ", ".join("".join(group_dict["chatters"].split()).split(",")) if "chatters" in group_dict else ""
+    command: str = group_dict["command"].lower()
+    arguments: str = group_dict["arguments"].strip() if "arguments" in group_dict else ""
     
     return chatters, command, arguments
   return ""
@@ -32,15 +32,15 @@ __globals_commands__["sys"] = import_module("sys")
 __globals_commands__["sys"].exit = __empty_func__
 __globals_commands__["datetime"] = import_module("datetime")
 
-__command_function_signature__ = "def command(chatters, sender, arguments, variables, alert):"
+__command_function_signature__: str = "def command(chatters, sender, arguments, variables, alert):"
 
 class CommandType(Enum):
   StringType = 0
   SimpleType = 1
   CodeType = 2
   
-def to_function_type(value: str) -> CommandType:
-  result: CommandType = None
+def to_function_type(value: str) -> Optional[CommandType]:
+  result: Optional[CommandType] = None
   if value == "string":
     result = CommandType.StringType
   elif value == "simple":
@@ -93,7 +93,7 @@ class Function:
   def compile(self) -> FunctionType:
     logger.debug("Commands.Function.compile()")
     
-    uniq_file = f"<string>.{self.channel}.{self.name}"
+    uniq_file: str = f"<string>.{self.channel}.{self.name}"
     logger.debug(f"uniq_file: {uniq_file}")
     
     if self.type == CommandType.StringType:
@@ -135,7 +135,7 @@ class Commands:
   def find(self, channel: int, command: str) -> Function:
     if channel not in self.commands:
       self.commands[channel] = []
-    found = [cmd for cmd in self.commands.get(channel, []) if cmd.name == command]
+    found: List[Function] = [cmd for cmd in self.commands.get(channel, []) if cmd.name == command]
     return found[0] if len(found) > 0 else None
   
   def delete(self, channel: int, command: str) -> bool:
@@ -171,10 +171,10 @@ def command_function(arguments: str, channel: int, commands: Commands):
   if regex := __command_function_regex__.match(arguments):
     group_dict = regex.groupdict()
     if "action" in group_dict and "command" in group_dict and group_dict["action"] in ("add", "create", "edit", "update", "delete", "remove"):
-      action = group_dict["action"]
-      command = group_dict["command"]
-      cmd_type = to_function_type("string" if "type" not in group_dict or group_dict["type"] is None else group_dict["type"])
-      response = "" if "response" not in group_dict or group_dict["response"] is None else group_dict["response"].strip()
+      action: str = group_dict["action"]
+      command: str = group_dict["command"]
+      cmd_type: CommandType = to_function_type("string" if "type" not in group_dict or group_dict["type"] is None else group_dict["type"])
+      response: str = "" if "response" not in group_dict or group_dict["response"] is None else group_dict["response"].strip()
       
       if action in ("delete", "remove"):
         try:

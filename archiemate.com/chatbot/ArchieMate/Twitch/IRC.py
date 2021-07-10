@@ -1,5 +1,5 @@
 import regex as re
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Optional
 import datetime
 from enum import Enum
 
@@ -11,20 +11,20 @@ logger = Logger.get_logger(__name__)
 irc_logger = Logger.get_irc_logger(__name__)
 
 
-def parse_tags(tags: str) -> Dict[str, str]:
+def parse_tags(tags: Optional[str]) -> Dict[str, str]:
   if tags is not None and tags.startswith("@"): tags = tags[1:]
   return {} if tags is None or len(tags) == 0 else {one_tag[0]: one_tag[1] for tag in tags.split(";") if (one_tag := tag.split("="))}
 
 
-def parse_badges(badges: str) -> Dict[str, int]:
+def parse_badges(badges: Optional[str]) -> Dict[str, int]:
   return {} if badges is None or len(badges) == 0 else {one_badge[0]: int(one_badge[1]) for badge in badges.split(",") if (one_badge := badge.split("/"))}
 
 
-def parse_badge_info(badge_info: str) -> Dict[str, int]:
+def parse_badge_info(badge_info: Optional[str]) -> Dict[str, int]:
   return {} if badge_info is None or len(badge_info) == 0 else {one_badge_info[0]: int(one_badge_info[1]) for badge_info_unsplitted in badge_info.split(",") if (one_badge_info := badge_info_unsplitted.split("/"))}
 
 
-def escape_irc_string(string: str) -> str:
+def escape_irc_string(string: Optional[str]) -> str:
   result = ""
   test = False
   if string is not None:
@@ -49,19 +49,19 @@ def escape_irc_string(string: str) -> str:
   return result
 
 
-def escape_irc(irc_text: str) -> str:
+def escape_irc(irc_text: Optional[str]) -> str:
   return "" if irc_text is None or len(irc_text) == 0 else escape_irc_string(irc_text)
 
 
-def parse_emote_range(emote_range: str) -> List[tuple]:
+def parse_emote_range(emote_range: Optional[str]) -> List[tuple[int, int]]:
   return [] if emote_range is None or len(emote_range) == 0 else [(int(one_range[0]), int(one_range[1]) - int(one_range[0]) + 1) for rng in emote_range.split(",") if (one_range := rng.split("-"))]
 
 
-def parse_emotes(emotes: str) -> Dict[int, List[tuple]]:
+def parse_emotes(emotes: Optional[str]) -> Dict[int, List[tuple[int, int]]]:
   return {} if emotes is None or len(emotes) == 0 else {int(one_emote[0]): parse_emote_range(one_emote[1]) for emote in emotes.split("/") if (one_emote := emote.split(":"))}
 
 
-def parse_emote_sets(emote_sets: str) -> List[int]:
+def parse_emote_sets(emote_sets: Optional[str]) -> List[int]:
   return [] if emote_sets is None or len(emote_sets) == 0 else [int(emote_set) for emote_set in emote_sets.split(",")]
 
 
@@ -214,10 +214,10 @@ class Message:
   def __init__(self):
     pass
 
-  def __repr__(self):
+  def __repr__(self) -> str:
     return f"{type(self).__name__}: {self.__dict__}"
 
-  def __str__(self):
+  def __str__(self) -> str:
     return self.__repr__()
 
 
@@ -254,9 +254,9 @@ class Generic(Message):
     logger.debug(f"Generic.__init__(regex: {group_dict})")
     Message.__init__(self)
     
-    self.message_number = int(group_dict["message_number"])
-    self.bot_user = group_dict["bot_user"]
-    self.message = group_dict["message"]
+    self.message_number: int = int(group_dict["message_number"])
+    self.bot_user: str = group_dict["bot_user"]
+    self.message: str = group_dict["message"]
     
     logger.debug(f"Result: {self.__dict__}")
 
@@ -276,7 +276,7 @@ class Ping(Message):
     logger.debug(f"Ping.__init__(regex: {group_dict})")
     Message.__init__(self)
     
-    self.server = group_dict["server"]
+    self.server: str = group_dict["server"]
     
     logger.debug(f"Result: {self.__dict__}")
 
@@ -296,32 +296,32 @@ class PrivMsg(Message):
     logger.debug(f"PrivMsg.__init__(regex: {group_dict})")
     Message.__init__(self)
     
-    tags = parse_tags(group_dict["tags"])
-    self.badge_info = parse_badge_info(tags.get("badge-info", ""))
-    self.badges = parse_badges(tags.get("badges", ""))
-    self.bits = int(tags.get("bits", "0"))
-    self.client_nonce = tags.get("client-nonce", "")
-    self.color = tags.get("color", "#FFFFFF")
-    self.display_name = escape_irc(tags.get("display-name", ""))
-    self.emotes = parse_emotes(tags.get("emotes", ""))
-    self.flags = tags.get("flags", "")
-    self.message_id = tags.get("id", "")
-    self.mod = tags.get("mod", "-1") == "1" if tags.get("mod", "-1") != "-1" else None
-    self.reply_parent_message_id = tags.get("reply-parent-msg-id", None)
-    self.reply_parent_user_id = int(tags.get("reply-parent-user-id", -1)) if tags.get("reply-parent-user-id", "-1") != "-1" else None
-    self.reply_parent_user_login = tags.get("reply-parent-user-login", None)
-    self.reply_parent_display_name = tags.get("reply-parent-display-name", None)
-    self.reply_parent_message_body = escape_irc(tags.get("reply-parent-msg-body", None)) if tags.get("reply-parent-msg-body", None) is not None else None
-    self.room_id = int(tags.get("room-id", "-1"))
-    self.subscriber = tags.get("subscriber", "-1") == "1" if tags.get("subscriber", "-1") != "-1" else None
-    tmi_sent_ts = int(tags.get("tmi-sent-ts", "0"))
-    self.tmi_sent_timestamp = datetime.datetime.utcfromtimestamp(tmi_sent_ts // 1000).replace(microsecond=tmi_sent_ts % (1000 * 1000)) if tmi_sent_ts > 0 else None
-    self.turbo = tags.get("turbo", "-1") == "1" if tags.get("turbo", "-1") != "-1" else None
-    self.user_id = int(tags.get("user-id", "-1"))
-    self.user = group_dict["user"]
-    self.user_type = tags.get("user-type", "")
-    self.channel = group_dict["channel"]
-    self.message = group_dict["message"]
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    self.badge_info: Dict[str, int] = parse_badge_info(tags.get("badge-info", ""))
+    self.badges: Dict[str, int] = parse_badges(tags.get("badges", ""))
+    self.bits: int = int(tags.get("bits", "0"))
+    self.client_nonce: str = tags.get("client-nonce", "")
+    self.color: str = tags.get("color", "#FFFFFF")
+    self.display_name: str = escape_irc(tags.get("display-name", ""))
+    self.emotes: Dict[int, List[tuple[int, int]]] = parse_emotes(tags.get("emotes", ""))
+    self.flags: str = tags.get("flags", "")
+    self.message_id: str = tags.get("id", "")
+    self.mod: Optional[bool] = tags.get("mod", "-1") == "1" if tags.get("mod", "-1") != "-1" else None
+    self.reply_parent_message_id: Optional[str] = tags.get("reply-parent-msg-id", None)
+    self.reply_parent_user_id: Optional[int] = int(tags.get("reply-parent-user-id", -1)) if tags.get("reply-parent-user-id", "-1") != "-1" else None
+    self.reply_parent_user_login: Optional[str] = tags.get("reply-parent-user-login", None)
+    self.reply_parent_display_name: Optional[str] = tags.get("reply-parent-display-name", None)
+    self.reply_parent_message_body: Optional[str] = escape_irc(tags.get("reply-parent-msg-body", None)) if tags.get("reply-parent-msg-body", None) is not None else None
+    self.room_id: int = int(tags.get("room-id", "-1"))
+    self.subscriber: Optional[bool] = tags.get("subscriber", "-1") == "1" if tags.get("subscriber", "-1") != "-1" else None
+    tmi_sent_ts: int = int(tags.get("tmi-sent-ts", "0"))
+    self.tmi_sent_timestamp: Optional[datetime.datetime] = datetime.datetime.utcfromtimestamp(tmi_sent_ts // 1000).replace(microsecond=tmi_sent_ts % (1000 * 1000)) if tmi_sent_ts > 0 else None
+    self.turbo: Optional[bool] = tags.get("turbo", "-1") == "1" if tags.get("turbo", "-1") != "-1" else None
+    self.user_id: int = int(tags.get("user-id", "-1"))
+    self.user: str = group_dict["user"]
+    self.user_type: str = tags.get("user-type", "")
+    self.channel: str = group_dict["channel"]
+    self.message: str = group_dict["message"]
     logger.debug(f"Result: {self.__dict__}")
 
 
@@ -340,8 +340,8 @@ class Join(Message):
     logger.debug(f"Join.__init__(regex: {group_dict})")
     Message.__init__(self)
     
-    self.user = group_dict["user"]
-    self.channel = group_dict["channel"]
+    self.user: str = group_dict["user"]
+    self.channel: str = group_dict["channel"]
 
 
 class Part(Message):
@@ -359,8 +359,8 @@ class Part(Message):
     logger.debug(f"Part.__init__(regex: {group_dict})")
     Message.__init__(self)
     
-    self.user = group_dict["user"]
-    self.channel = group_dict["channel"]
+    self.user: str = group_dict["user"]
+    self.channel: str = group_dict["channel"]
 
 
 class CapabilityAcknowledge(Message):
@@ -378,7 +378,7 @@ class CapabilityAcknowledge(Message):
     logger.debug(f"CapabilityAcknowledge.__init__(regex: {group_dict})")
     Message.__init__(self)
     
-    self.capabilities = group_dict["capabilities"].split()
+    self.capabilities: List[str] = group_dict["capabilities"].split()
 
 
 class HostTarget(Message):
@@ -396,9 +396,9 @@ class HostTarget(Message):
     logger.debug(f"HostTarget.__init__(regex: {group_dict})")
     Message.__init__(self)
     
-    self.channel = group_dict["channel"]
-    self.hosted_channel = group_dict["hosted_channel"] if group_dict["hosted_channel"] != "-" else ""
-    self.viewers = int(group_dict["viewers"]) if group_dict["viewers"] not in ("-", "", None) else None
+    self.channel: str = group_dict["channel"]
+    self.hosted_channel: str = group_dict["hosted_channel"] if group_dict["hosted_channel"] != "-" else ""
+    self.viewers: Optional[int] = int(group_dict["viewers"]) if group_dict["viewers"] not in ("-", "", None) else None
 
 
 class NoticeCommands(Message):
@@ -416,10 +416,10 @@ class NoticeCommands(Message):
     logger.debug(f"NoticeCommands.__init__(regex: {group_dict})")
     Message.__init__(self)
     
-    tags = parse_tags(group_dict["tags"])
-    self.message_id = NoticeMessageId(tags["msg-id"])
-    self.channel = group_dict["channel"]
-    self.message = group_dict["message"]
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    self.message_id: NoticeMessageId = NoticeMessageId(tags["msg-id"])
+    self.channel: str = group_dict["channel"]
+    self.message: str = group_dict["message"]
 
 
 class Reconnect(Message):
@@ -451,13 +451,13 @@ class ClearChat(Message):
     logger.debug(f"ClearChat.__init__(regex: {group_dict})")
     Message.__init__(self)
     
-    tags = parse_tags(group_dict["tags"])
-    self.ban_duration = tags.get("ban-duration", None)
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    self.ban_duration: Optional[str] = tags.get("ban-duration", None)
     self.room_id = int(tags.get("room-id", -1)) if tags.get("room-id") != -1 else None
     tmi_sent_ts = int(tags.get("tmi-sent-ts", "0"))
-    self.tmi_sent_timestamp = datetime.datetime.utcfromtimestamp(tmi_sent_ts // 1000).replace(microsecond=tmi_sent_ts % (1000 * 1000)) if tmi_sent_ts > 0 else None
-    self.channel = group_dict["channel"]
-    self.user = group_dict.get("user", None)
+    self.tmi_sent_timestamp: Optional[datetime.datetime] = datetime.datetime.utcfromtimestamp(tmi_sent_ts // 1000).replace(microsecond=tmi_sent_ts % (1000 * 1000)) if tmi_sent_ts > 0 else None
+    self.channel: str = group_dict["channel"]
+    self.user: Optional[str] = group_dict.get("user", None)
 
 
 class ClearMessage(Message):
@@ -475,11 +475,11 @@ class ClearMessage(Message):
     logger.debug(f"ClearMessage.__init__(regex: {group_dict})")
     Message.__init__(self)
     
-    tags = parse_tags(group_dict["tags"])
-    self.user = tags.get("login", "")
-    self.target_message_id = tags.get("target-msg-id", "")
-    self.channel = group_dict["channel"]
-    self.message = group_dict["message"]
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    self.user: str = tags.get("login", "")
+    self.target_message_id: str = tags.get("target-msg-id", "")
+    self.channel: str = group_dict["channel"]
+    self.message: str = group_dict["message"]
 
 
 class GlobalUserState(Message):
@@ -497,15 +497,15 @@ class GlobalUserState(Message):
     logger.debug(f"Global.__init__(regex: {group_dict})")
     Message.__init__(self)
     
-    tags = parse_tags(group_dict["tags"])
-    self.badge_info = parse_badge_info(tags.get("badge-info", ""))
-    self.badges = parse_badges(tags.get("badges", ""))
-    self.color = tags.get("color", "#FFFFFF")
-    self.display_name = tags.get("display-name", "")
-    self.emote_sets = parse_emote_sets(tags.get("emote-sets", ""))
-    self.turbo = tags.get("turbo", "-1") == "1" if tags.get("turbo", "-1") != "-1" else None
-    self.user_id = int(tags.get("user-id", "-1"))
-    self.user_type = tags.get("user-type", "")
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    self.badge_info: Dict[str, int] = parse_badge_info(tags.get("badge-info", ""))
+    self.badges: Dict[str, int] = parse_badges(tags.get("badges", ""))
+    self.color: str = tags.get("color", "#FFFFFF")
+    self.display_name: str = tags.get("display-name", "")
+    self.emote_sets: List[int] = parse_emote_sets(tags.get("emote-sets", ""))
+    self.turbo: Optional[bool] = tags.get("turbo", "-1") == "1" if tags.get("turbo", "-1") != "-1" else None
+    self.user_id: int = int(tags.get("user-id", "-1"))
+    self.user_type: str = tags.get("user-type", "")
 
 
 class RoomState(Message):
@@ -523,13 +523,13 @@ class RoomState(Message):
     logger.debug(f"RoomState.__init__(regex: {group_dict})")
     Message.__init__(self)
     
-    tags = parse_tags(group_dict["tags"])
-    self.emote_only = tags.get("emote-only", "-1") == "1" if tags.get("emote-only", "-1") != "-1" else None
-    self.followers_only = tags.get("followers-only", "-1") == "1" if tags.get("followers-only", "-1") != "-1" else None
-    self.r9k = tags.get("r9k", "-1") == "1" if tags.get("r9k", "-1") != "-1" else None
-    self.slow = int(tags.get("slow", "-1")) if tags.get("slow", "-1") != "-1" else None
-    self.subs_only = tags.get("subs-only", "-1") == "1" if tags.get("subs-only", "-1") != "-1" else None
-    self.channel = group_dict["channel"]
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    self.emote_only: Optional[bool] = tags.get("emote-only", "-1") == "1" if tags.get("emote-only", "-1") != "-1" else None
+    self.followers_only: Optional[bool] = tags.get("followers-only", "-1") == "1" if tags.get("followers-only", "-1") != "-1" else None
+    self.r9k: Optional[bool] = tags.get("r9k", "-1") == "1" if tags.get("r9k", "-1") != "-1" else None
+    self.slow: Optional[int] = int(tags.get("slow", "-1")) if tags.get("slow", "-1") != "-1" else None
+    self.subs_only: Optional[bool] = tags.get("subs-only", "-1") == "1" if tags.get("subs-only", "-1") != "-1" else None
+    self.channel: str = group_dict["channel"]
 
 
 class UserNotice(Message):
@@ -547,25 +547,25 @@ class UserNotice(Message):
     logger.debug(f"UserNotice.__init__(regex: '{regex}')")
     Message.__init__(self)
     
-    tags = parse_tags(group_dict["tags"])
-    self.badge_info = parse_badge_info(tags.get("badge-info", ""))
-    self.badges = parse_badges(tags.get("badges", ""))
-    self.color = tags.get("color", "#FFFFFF")
-    self.display_name = escape_irc(tags.get("display-name", ""))
-    self.emotes = parse_emotes(tags.get("emotes", ""))
-    self.message_id = tags.get("id", "")
-    self.user = tags.get("login", "")
-    self.message = group_dict.get("message", "")
-    self.mod = tags.get("mod", "-1") == "1" if tags.get("mod", "-1") != "-1" else None
-    self.room_id = int(tags.get("room-id", "-1"))
-    self.subscriber = tags.get("subscriber", "-1") == "1" if tags.get("subscriber", "-1") != "-1" else None
-    self.system_message = escape_irc(tags.get("system-msg", ""))
-    tmi_sent_ts = int(tags.get("tmi-sent-ts", "0"))
-    self.tmi_sent_timestamp = datetime.datetime.utcfromtimestamp(tmi_sent_ts // 1000).replace(microsecond=tmi_sent_ts % (1000 * 1000))
-    self.turbo = tags.get("turbo", "-1") == "1" if tags.get("turbo", "-1") != "-1" else None
-    self.user_id = int(tags.get("user-id", "-1"))
-    self.user_type = tags.get("user-type", "")
-    self.channel = group_dict["channel"]
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    self.badge_info: Dict[str, int] = parse_badge_info(tags.get("badge-info", ""))
+    self.badges: Dict[str, int] = parse_badges(tags.get("badges", ""))
+    self.color: str = tags.get("color", "#FFFFFF")
+    self.display_name: str = escape_irc(tags.get("display-name", ""))
+    self.emotes: Dict[int, List[tuple[int, int]]] = parse_emotes(tags.get("emotes", ""))
+    self.message_id: str = tags.get("id", "")
+    self.user: str = tags.get("login", "")
+    self.message: str = group_dict.get("message", "")
+    self.mod: Optional[bool] = tags.get("mod", "-1") == "1" if tags.get("mod", "-1") != "-1" else None
+    self.room_id: int = int(tags.get("room-id", "-1"))
+    self.subscriber: Optional[bool] = tags.get("subscriber", "-1") == "1" if tags.get("subscriber", "-1") != "-1" else None
+    self.system_message: str = escape_irc(tags.get("system-msg", ""))
+    tmi_sent_ts: int = int(tags.get("tmi-sent-ts", "0"))
+    self.tmi_sent_timestamp: Optional[datetime.datetime] = datetime.datetime.utcfromtimestamp(tmi_sent_ts // 1000).replace(microsecond=tmi_sent_ts % (1000 * 1000))
+    self.turbo: Optional[bool] = tags.get("turbo", "-1") == "1" if tags.get("turbo", "-1") != "-1" else None
+    self.user_id: int = int(tags.get("user-id", "-1"))
+    self.user_type: str = tags.get("user-type", "")
+    self.channel: str = group_dict["channel"]
 
 
 class SubPlan(Enum):
@@ -578,7 +578,8 @@ class UserNoticeSubscription(UserNotice):
   @staticmethod
   def match(regex) -> bool:
     group_dict = regex.groupdict()
-    result = group_dict["msg-id"] == "sub"
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    result: bool = tags["msg-id"] == "sub"
     logger.debug(f"UserNoticeSubscription.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -589,19 +590,19 @@ class UserNoticeSubscription(UserNotice):
     UserNotice.__init__(self, regex)
     
     tags = parse_tags(group_dict["tags"])
-    self.cumulative_months = int(tags.get("msg-param-cumulative-months", "0"))
-    self.should_share_streak = tags.get("msg-param-should-share-streak", "0") == "1"
-    self.streak_months = int(tags.get("msg-param-streak-months", "0"))
-    self.sub_plan = SubPlan(tags.get("msg-param-sub-plan", "1000"))
-    self.sub_plan_name = tags.get("msg-param-sub-plan-name", "")
+    self.cumulative_months: int = int(tags.get("msg-param-cumulative-months", "0"))
+    self.should_share_streak: bool = tags.get("msg-param-should-share-streak", "0") == "1"
+    self.streak_months: int = int(tags.get("msg-param-streak-months", "0"))
+    self.sub_plan: SubPlan = SubPlan(tags.get("msg-param-sub-plan", "1000"))
+    self.sub_plan_name: str = escape_irc(tags.get("msg-param-sub-plan-name", ""))
 
 
 class UserNoticeResubscription(UserNotice):
   @staticmethod
   def match(regex) -> bool:
     group_dict = regex.groupdict()
-    tags = parse_tags(group_dict["tags"])
-    result = tags["msg-id"] == "resub"
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    result: bool = tags["msg-id"] == "resub"
     logger.debug(f"UserNoticeResubscription.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -611,20 +612,20 @@ class UserNoticeResubscription(UserNotice):
     logger.debug(f"UserNoticeResubscription.__init__(regex: {group_dict})")
     UserNotice.__init__(self, regex)
     
-    tags = parse_tags(group_dict["tags"])
-    self.cumulative_months = int(tags.get("msg-param-cumulative-months", "1"))
-    self.should_share_streak = tags.get("msg-param-should-share-streak", "0") == "1"
-    self.streak_months = int(tags.get("msg-param-streak-months", "0"))
-    self.sub_plan = SubPlan(tags.get("msg-param-sub-plan", "1000"))
-    self.sub_plan_name = tags.get("msg-param-sub-plan-name", "")
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    self.cumulative_months: int = int(tags.get("msg-param-cumulative-months", "1"))
+    self.should_share_streak: bool = tags.get("msg-param-should-share-streak", "0") == "1"
+    self.streak_months: int = int(tags.get("msg-param-streak-months", "0"))
+    self.sub_plan: SubPlan = SubPlan(tags.get("msg-param-sub-plan", "1000"))
+    self.sub_plan_name: str = escape_irc(tags.get("msg-param-sub-plan-name", ""))
 
 
 class UserNoticeSubscriptionGift(UserNotice):
   @staticmethod
   def match(regex) -> bool:
     group_dict = regex.groupdict()
-    tags = parse_tags(group_dict["tags"])
-    result = tags["msg-id"] == "subgift"
+    tags: Dict[str, str ]= parse_tags(group_dict["tags"])
+    result: bool = tags["msg-id"] == "subgift"
     logger.debug(f"UserNoticeSubscriptionGift.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -634,22 +635,22 @@ class UserNoticeSubscriptionGift(UserNotice):
     logger.debug(f"UserNoticeSubscriptionGift.__init__(regex: {group_dict})")
     UserNotice.__init__(self, regex)
     
-    tags = parse_tags(group_dict["tags"])
-    self.months = int(tags.get("msg-param-months", "1"))
-    self.recipient_display_name = tags["msg-param-recipient-display-name"]
-    self.recipient_id = tags["msg-param-recipient-id"]
-    self.recipient_user_name = tags["msg-param-recipient-user-name"]
-    self.sub_plan = SubPlan(tags.get("msg-param-sub-plan", "1000"))
-    self.sub_plan_name = tags.get("msg-param-sub-plan-name", "")
-    self.gift_months = tags.get("msg-param-gift-months", "1")
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    self.months: int = int(tags.get("msg-param-months", "1"))
+    self.recipient_display_name: str = tags["msg-param-recipient-display-name"]
+    self.recipient_id: int = int(tags["msg-param-recipient-id"])
+    self.recipient_name: str = tags["msg-param-recipient-name"]
+    self.sub_plan: SubPlan = SubPlan(tags.get("msg-param-sub-plan", "1000"))
+    self.sub_plan_name: str = escape_irc(tags.get("msg-param-sub-plan-name", ""))
+    self.gift_months: int = int(tags.get("msg-param-gift-months", "1"))
 
 
 class UserNoticeAnonymousSubscriptionGift(UserNotice):
   @staticmethod
   def match(regex) -> bool:
     group_dict = regex.groupdict()
-    tags = parse_tags(group_dict["tags"])
-    result = tags["msg-id"] == "subgift"
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    result: bool = tags["msg-id"] == "subgift"
     logger.debug(f"UserNoticeAnonymousSubscriptionGift.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -659,22 +660,22 @@ class UserNoticeAnonymousSubscriptionGift(UserNotice):
     logger.debug(f"UserNoticeAnonymousSubscriptionGift.__init__(regex: {group_dict})")
     UserNotice.__init__(self, regex)
     
-    tags = parse_tags(group_dict["tags"])
-    self.months = int(tags.get("msg-param-months", "1"))
-    self.recipient_display_name = tags["msg-param-recipient-display-name"]
-    self.recipient_id = tags["msg-param-recipient-id"]
-    self.recipient_user_name = tags["msg-param-recipient-user-name"]
-    self.sub_plan = SubPlan(tags.get("msg-param-sub-plan", "1000"))
-    self.sub_plan_name = tags.get("msg-param-sub-plan-name", "")
-    self.gift_months = tags.get("msg-param-gift-months", "1")
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    self.months: int = int(tags.get("msg-param-months", "1"))
+    self.recipient_display_name: str = tags["msg-param-recipient-display-name"]
+    self.recipient_id: int = int(tags["msg-param-recipient-id"])
+    self.recipient_user_name: str = tags["msg-param-recipient-user-name"]
+    self.sub_plan: SubPlan = SubPlan(tags.get("msg-param-sub-plan", "1000"))
+    self.sub_plan_name: str = escape_irc(tags.get("msg-param-sub-plan-name", ""))
+    self.gift_months: int = int(tags.get("msg-param-gift-months", "1"))
 
 
 class UserNoticeSubscriptionMysteryGift(UserNotice):
   @staticmethod
   def match(regex) -> bool:
     group_dict = regex.groupdict()
-    tags = parse_tags(group_dict["tags"])
-    result = tags["msg-id"] == "submysterygift"
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    result: bool = tags["msg-id"] == "submysterygift"
     logger.debug(f"UserNoticeSubscriptionMysteryGift.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -684,15 +685,15 @@ class UserNoticeSubscriptionMysteryGift(UserNotice):
     logger.debug(f"UserNoticeSubscriptionMysteryGift.__init__(regex: {group_dict}")
     UserNotice.__init__(self, regex)
     
-    tags = parse_tags(group_dict["tags"])
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
 
 
 class UserNoticeGiftPaidUpgrade(UserNotice):
   @staticmethod
   def match(regex) -> bool:
     group_dict = regex.groupdict()
-    tags = parse_tags(group_dict["tags"])
-    result = tags["msg-id"] == "giftpaidupgrade"
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    result: bool = tags["msg-id"] == "giftpaidupgrade"
     logger.debug(f"UserNoticeGiftPaidUpgrade.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -702,19 +703,19 @@ class UserNoticeGiftPaidUpgrade(UserNotice):
     logger.debug(f"UserNoticeGiftPaidUpgrade.__init__(regex: {group_dict}")
     UserNotice.__init__(self, regex)
     
-    tags = parse_tags(group_dict["tags"])
-    self.promo_gift_total = tags["msg-param-promo-gift-total"]
-    self.promo_name = tags["msg-param-promo-name"]
-    self.sender_login = tags["msg-param-sender-login"]
-    self.sender_display_name = tags["msg-param-sender-name"]
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    self.promo_gift_total: int = int(tags["msg-param-promo-gift-total"])
+    self.promo_name: str = escape_irc(tags["msg-param-promo-name"])
+    self.sender_login: str = tags["msg-param-sender-login"]
+    self.sender_display_name: str = tags["msg-param-sender-name"]
 
 
 class UserNoticeAnonymousGiftPaidUpgrade(UserNotice):
   @staticmethod
   def match(regex) -> bool:
     group_dict = regex.groupdict()
-    tags = parse_tags(group_dict["tags"])
-    result = tags["msg-id"] == "giftpaidupgrade"
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    result: bool = tags["msg-id"] == "giftpaidupgrade"
     logger.debug(f"UserNoticeAnonymousGiftPaidUpgrade.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -724,17 +725,17 @@ class UserNoticeAnonymousGiftPaidUpgrade(UserNotice):
     logger.debug(f"UserNoticeAnonymousGiftPaidUpgrade.__init__(regex: {group_dict}")
     UserNotice.__init__(self, regex)
     
-    tags = parse_tags(group_dict["tags"])
-    self.promo_gift_total = tags["msg-param-promo-gift-total"]
-    self.promo_name = tags["msg-param-promo-name"]
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    self.promo_gift_total: int = int(tags["msg-param-promo-gift-total"])
+    self.promo_name: str = escape_irc(tags["msg-param-promo-name"])
 
 
 class UserNoticeRewardGift(UserNotice):
   @staticmethod
   def match(regex) -> bool:
     group_dict = regex.groupdict()
-    tags = parse_tags(group_dict["tags"])
-    result = tags["msg-id"] == "rewardgift"
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    result: bool = tags["msg-id"] == "rewardgift"
     logger.debug(f"UserNoticeRewardGift.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -744,15 +745,15 @@ class UserNoticeRewardGift(UserNotice):
     logger.debug(f"UserNoticeRewardGift.__init__(regex: {group_dict}")
     UserNotice.__init__(self, regex)
     
-    tags = parse_tags(group_dict["tags"])
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
 
 
 class UserNoticeRaid(UserNotice):
   @staticmethod
   def match(regex) -> bool:
     group_dict = regex.groupdict()
-    tags = parse_tags(group_dict["tags"])
-    result = tags["msg-id"] == "raid"
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    result: bool = tags["msg-id"] == "raid"
     logger.debug(f"UserNoticeRaid.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -762,18 +763,18 @@ class UserNoticeRaid(UserNotice):
     logger.debug(f"UserNoticeRaid.__init__(regex: {group_dict}")
     UserNotice.__init__(self, regex)
     
-    tags = parse_tags(group_dict["tags"])
-    self.display_name = tags["msg-param-displayName"]
-    self.login = tags["msg-param-login"]
-    self.viewer_count = int(tags.get("msg-param-viewerCount", "0"))
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    self.display_name: str = tags["msg-param-displayName"]
+    self.login: str = tags["msg-param-login"]
+    self.viewer_count: int = int(tags.get("msg-param-viewerCount", "0"))
     
 
 class UserNoticeUnraid(UserNotice):
   @staticmethod
   def match(regex) -> bool:
     group_dict = regex.groupdict()
-    tags = parse_tags(group_dict["tags"])
-    result = tags["msg-id"] == "unraid"
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    result: bool = tags["msg-id"] == "unraid"
     logger.debug(f"UserNoticeUnraid.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -783,15 +784,16 @@ class UserNoticeUnraid(UserNotice):
     logger.debug(f"UserNoticeUnraid.__init__(regex: {group_dict}")
     UserNotice.__init__(self, regex)
     
-    tags = parse_tags(group_dict["tags"])
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    
 
 
 class UserNoticeRitual(UserNotice):
   @staticmethod
   def match(regex) -> bool:
     group_dict = regex.groupdict()
-    tags = parse_tags(group_dict["tags"])
-    result = tags["msg-id"] == "ritual"
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    result: bool = tags["msg-id"] == "ritual"
     logger.debug(f"UserNoticeRitual.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -801,16 +803,16 @@ class UserNoticeRitual(UserNotice):
     logger.debug(f"UserNoticeRitual.__init__(regex: {group_dict}")
     UserNotice.__init__(self, regex)
     
-    tags = parse_tags(group_dict["tags"])
-    ritual_name = tags["msg-param-ritual-name"]
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    self.ritual_name: str = tags["msg-param-ritual-name"]
 
 
 class UserNoticeBitsBadgeTier(UserNotice):
   @staticmethod
   def match(regex) -> bool:
     group_dict = regex.groupdict()
-    tags = parse_tags(group_dict["tags"])
-    result = tags["msg-id"] == "bitsbadgetier"
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    result: bool = tags["msg-id"] == "bitsbadgetier"
     logger.debug(f"UserNoticeBitsBadgeTier.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -820,8 +822,8 @@ class UserNoticeBitsBadgeTier(UserNotice):
     logger.debug(f"UserNoticeBitsBadgeTier.__init__(regex: {group_dict}")
     UserNotice.__init__(self, regex)
     
-    tags = parse_tags(group_dict["tags"])
-    threshold = int(group_dict["msg-param-threshold"])
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    threshold: int = int(group_dict["msg-param-threshold"])
 
 
 class UserState(Message):
@@ -839,25 +841,25 @@ class UserState(Message):
     logger.debug(f"UserState.__init__(regex: {group_dict})")
     Message.__init__(self)
     
-    tags = parse_tags(group_dict["tags"])
-    self.badge_info = parse_badge_info(tags.get("badge-info", ""))
-    self.badges = parse_badges(tags.get("badges", ""))
-    self.color = tags.get("color", "#FFFFFF")
-    self.display_name = tags.get("display-name", "")
-    self.emote_sets = parse_emote_sets(tags.get("emote-sets", ""))
-    self.mod = tags.get("mod", "-1") == "1" if tags.get("mod", "-1") != "-1" else None
+    tags: Dict[str, str] = parse_tags(group_dict["tags"])
+    self.badge_info: Dict[str, int] = parse_badge_info(tags.get("badge-info", ""))
+    self.badges: Dict[str, int] = parse_badges(tags.get("badges", ""))
+    self.color: str = tags.get("color", "#FFFFFF")
+    self.display_name: str = tags.get("display-name", "")
+    self.emote_sets: List[int] = parse_emote_sets(tags.get("emote-sets", ""))
+    self.mod: Optional[bool] = tags.get("mod", "-1") == "1" if tags.get("mod", "-1") != "-1" else None
 
 
 class UnknownMessage(Message):
   def __init__(self, message: str):
     logger.debug(f"UnknownMessage.__init__(message: '{message}')")
     Message.__init__(self)
-    self.message = message
+    self.message: str = message
     logger.debug(f"Result: {self.__dict__}")
 
 
 def decode_message(message: str) -> Message:
-  result = None
+  result: Optional[Message] = None
   
   for message_class in (
     PrivMsg, Join, Part, UserState, UserNotice, GlobalUserState, RoomState,
@@ -887,19 +889,19 @@ def decode_message(message: str) -> Message:
 
 def send(channel: str, message: str) -> str:
   logger.debug(f"send(message: '{message}')")
-  ret = f"PRIVMSG #{channel} :{message}"
+  ret: str = f"PRIVMSG #{channel} :{message}"
   logger.debug(f"Result: '{ret}'")
   return ret
 
-twitch_irc_address = "irc.chat.twitch.tv"
-twitch_irc_port = 6667
+twitch_irc_address: str = "irc.chat.twitch.tv"
+twitch_irc_port: int = 6667
 
 
 class IRC:
   def __init__(self, bot_name: str, channel: str, oauth: str, poller: Poller.Poller):
     logger.debug(f"IRC.__init__(bot_name: '{bot_name}', channel: '{channel}', oauth: '{oauth}')")
-    self.channel = channel
-    self.socket = Socket.Socket(twitch_irc_address, twitch_irc_port, poller)
+    self.channel: str = channel
+    self.socket: Socket.Socket = Socket.Socket(twitch_irc_address, twitch_irc_port, poller)
     self.socket.send(f"PASS oauth:{oauth}")
     self.socket.send(f"NICK {bot_name}")
     self.socket.send("CAP REQ :twitch.tv/membership twitch.tv/tags twitch.tv/commands")
@@ -930,7 +932,7 @@ class IRC:
     self.socket.send(f"PONG :{server}")
   
   def recv(self) -> str:
-    ret = self.socket.recv()
+    ret: str = self.socket.recv()
     logger.debug(f"IRC.recv() -> '{ret}'")
     return ret
   
@@ -939,10 +941,17 @@ class IRC:
     self.socket.flush()
 
 
-def checkGenericMessage(generic_message: Generic, message_number: int, message: str) -> bool:
-  logger.debug(f"checkGenericMessage(generic_message: {generic_message}, message_number: {message_number}, message: '{message})")
-  is_generic_message = isinstance(generic_message, Generic)
-  is_right_generic_message = generic_message.message_number == message_number and generic_message.message == message
-  ret = is_generic_message and is_right_generic_message
+def checkGenericMessage(message: Message, message_number: int, generic_message: str) -> bool:
+  logger.debug(f"checkGenericMessage(message: {message}, message_number: {message_number}, generic_message: '{generic_message})")
+  ret: bool = True
+  is_generic_message: bool = False
+  is_right_generic_message: bool = False
+  if is_generic_message := isinstance(message, Generic):
+    generic: Generic = message
+    is_right_generic_message = generic.message_number == message_number and generic.message == generic_message
+    ret = is_right_generic_message
+  else:
+    ret = False
+  
   logger.debug(f"is_generic_message: {is_generic_message}, is_right_generic_message: {is_right_generic_message} => Result: {ret}")
   return ret

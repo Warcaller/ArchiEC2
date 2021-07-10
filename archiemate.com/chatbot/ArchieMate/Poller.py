@@ -1,17 +1,17 @@
 import select
 import socket
-from typing import NamedTuple
+from typing import NamedTuple, Dict
 import queue
 from os import environ as env
 import ArchieMate.Logger as Logger
 
-logger = Logger.get_logger(__name__)
+logger: Logger = Logger.get_logger(__name__)
 
-READ_ONLY = select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR
-READ_WRITE = READ_ONLY | select.POLLOUT
+READ_ONLY: int = select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR
+READ_WRITE: int = READ_ONLY | select.POLLOUT
 
-POLLER_TIMEOUT = int(env.get("POLLER_TIMEOUT", "250"))
-POLLER_FLUSH_TIMEOUT = POLLER_TIMEOUT * 50
+POLLER_TIMEOUT: int = int(env.get("POLLER_TIMEOUT", "250"))
+POLLER_FLUSH_TIMEOUT: int = POLLER_TIMEOUT * 50
 
 class Poller:
   class SocketInfo(NamedTuple):
@@ -23,7 +23,7 @@ class Poller:
   def __init__(self):
     logger.debug("Poller.__init__()")
     self.poller: select.poll = select.poll()
-    self.sockets = {}
+    self.sockets: Dict[int, Poller.SocketInfo] = {}
   
   def add_socket(self, socket: socket.socket):
     logger.debug(f"Poller.add_socket(socket: {socket})")
@@ -47,7 +47,7 @@ class Poller:
     logger.debug(f"Poller.read_from_socket(socket: {socket}")
     self.poll(POLLER_TIMEOUT)
     try:
-      next_msg = self.sockets[socket.fileno()].queue_read.get_nowait()
+      next_msg: bytes = self.sockets[socket.fileno()].queue_read.get_nowait()
     except queue.Empty:
       return b""
     else:
@@ -69,13 +69,13 @@ class Poller:
       elif flag & select.POLLOUT:
         logger.debug(f"socket {self.sockets[fd].socket} is ready to send data.")
         try:
-          next_msg = self.sockets[fd].queue_write.get_nowait()
+          next_msg: bytes = self.sockets[fd].queue_write.get_nowait()
         except queue.Empty:
           logger.debug(f"no more data to send to the socket.")
           self.poller.modify(self.sockets[fd].socket, READ_ONLY)
         else:
           logger.debug(f"sending data '{next_msg}'")
-          bytes_sent = 0
+          bytes_sent: int = 0
           while bytes_sent < len(next_msg):
             bytes_sent += self.sockets[fd].socket.send(next_msg[bytes_sent:])
   

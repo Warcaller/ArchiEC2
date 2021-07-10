@@ -22,10 +22,10 @@ class Socket:
   
   def recv(self) -> str:
     logger.debug("Socket.recv()")
-    recv_bytes = b""
+    recv_bytes: bytes = b""
     try:
       while recv_bytes[-1:] != b"\n":
-        received = self.poller.read_from_socket(self.socket)
+        received: bytes = self.poller.read_from_socket(self.socket)
         if received == b"":
           return b""
         recv_bytes += received
@@ -34,13 +34,13 @@ class Socket:
     finally:
       if len(recv_bytes) == 0 and self.poller.sockets[self.socket.fileno()].dead:
         raise ConnectionError("Socket is dead")
-      ret = recv_bytes.decode().strip()
+      ret: str = recv_bytes.decode().strip()
       logger.debug(f"Received: {ret}")
       return ret
   
   def recv_nowait(self) -> str:
     logger.debug("Socket.recv_nowait()")
-    received = ""
+    received: str = ""
     while len(received) == 0:
       received = self.recv()
     logger.debug(f"NOWAIT received: '{received}'")
