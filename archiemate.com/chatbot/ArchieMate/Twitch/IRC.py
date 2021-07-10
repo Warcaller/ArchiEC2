@@ -301,7 +301,7 @@ class PrivMsg(Message):
     self.badges: Dict[str, int] = parse_badges(tags.get("badges", ""))
     self.bits: int = int(tags.get("bits", "0"))
     self.client_nonce: str = tags.get("client-nonce", "")
-    self.color: str = tags.get("color", "#FFFFFF")
+    self.color: str = tags.get("color", "")
     self.display_name: str = escape_irc(tags.get("display-name", ""))
     self.emotes: Dict[int, List[tuple[int, int]]] = parse_emotes(tags.get("emotes", ""))
     self.flags: str = tags.get("flags", "")
@@ -500,7 +500,7 @@ class GlobalUserState(Message):
     tags: Dict[str, str] = parse_tags(group_dict["tags"])
     self.badge_info: Dict[str, int] = parse_badge_info(tags.get("badge-info", ""))
     self.badges: Dict[str, int] = parse_badges(tags.get("badges", ""))
-    self.color: str = tags.get("color", "#FFFFFF")
+    self.color: str = tags.get("color", "")
     self.display_name: str = tags.get("display-name", "")
     self.emote_sets: List[int] = parse_emote_sets(tags.get("emote-sets", ""))
     self.turbo: Optional[bool] = tags.get("turbo", "-1") == "1" if tags.get("turbo", "-1") != "-1" else None
@@ -550,9 +550,10 @@ class UserNotice(Message):
     tags: Dict[str, str] = parse_tags(group_dict["tags"])
     self.badge_info: Dict[str, int] = parse_badge_info(tags.get("badge-info", ""))
     self.badges: Dict[str, int] = parse_badges(tags.get("badges", ""))
-    self.color: str = tags.get("color", "#FFFFFF")
+    self.color: str = tags.get("color", "")
     self.display_name: str = escape_irc(tags.get("display-name", ""))
     self.emotes: Dict[int, List[tuple[int, int]]] = parse_emotes(tags.get("emotes", ""))
+    self.flags: str = tags.get("flags", "")
     self.message_id: str = tags.get("id", "")
     self.user: str = tags.get("login", "")
     self.message: str = group_dict.get("message", "")
@@ -650,7 +651,7 @@ class UserNoticeAnonymousSubscriptionGift(UserNotice):
   def match(regex) -> bool:
     group_dict = regex.groupdict()
     tags: Dict[str, str] = parse_tags(group_dict["tags"])
-    result: bool = tags["msg-id"] == "subgift"
+    result: bool = tags["msg-id"] == "anonsubgift"
     logger.debug(f"UserNoticeAnonymousSubscriptionGift.match(group_dict: {group_dict}) -> {result}")
     return result
   
@@ -664,7 +665,7 @@ class UserNoticeAnonymousSubscriptionGift(UserNotice):
     self.months: int = int(tags.get("msg-param-months", "1"))
     self.recipient_display_name: str = tags["msg-param-recipient-display-name"]
     self.recipient_id: int = int(tags["msg-param-recipient-id"])
-    self.recipient_user_name: str = tags["msg-param-recipient-user-name"]
+    self.recipient_name: str = tags["msg-param-recipient-name"]
     self.sub_plan: SubPlan = SubPlan(tags.get("msg-param-sub-plan", "1000"))
     self.sub_plan_name: str = escape_irc(tags.get("msg-param-sub-plan-name", ""))
     self.gift_months: int = int(tags.get("msg-param-gift-months", "1"))
@@ -764,7 +765,7 @@ class UserNoticeRaid(UserNotice):
     UserNotice.__init__(self, regex)
     
     tags: Dict[str, str] = parse_tags(group_dict["tags"])
-    self.display_name: str = tags["msg-param-displayName"]
+    self.raider_display_name: str = tags["msg-param-displayName"]
     self.login: str = tags["msg-param-login"]
     self.viewer_count: int = int(tags.get("msg-param-viewerCount", "0"))
     
@@ -844,10 +845,14 @@ class UserState(Message):
     tags: Dict[str, str] = parse_tags(group_dict["tags"])
     self.badge_info: Dict[str, int] = parse_badge_info(tags.get("badge-info", ""))
     self.badges: Dict[str, int] = parse_badges(tags.get("badges", ""))
-    self.color: str = tags.get("color", "#FFFFFF")
+    self.color: str = tags.get("color", "")
     self.display_name: str = tags.get("display-name", "")
     self.emote_sets: List[int] = parse_emote_sets(tags.get("emote-sets", ""))
     self.mod: Optional[bool] = tags.get("mod", "-1") == "1" if tags.get("mod", "-1") != "-1" else None
+    self.subscriber: Optional[bool] = tags.get("subscriber", "-1") == "1" if tags.get("subscriber", "-1") != "-1" else None
+    self.turbo: Optional[bool] = tags.get("turbo", "-1") == "1" if tags.get("turbo", "-1") != "-1" else None
+    self.user_type: str = tags.get("user-type", "")
+    self.channel: str = group_dict["channel"]
 
 
 class UnknownMessage(Message):
