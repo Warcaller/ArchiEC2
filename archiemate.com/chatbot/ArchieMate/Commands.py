@@ -1,5 +1,6 @@
 import ArchieMate.Logger as Logger
-from typing import Callable, Dict, List, Optional, FunctionType, CodeType
+from typing import Callable, Dict, List, Optional
+from types import FunctionType, CodeType
 from importlib import import_module
 from enum import Enum
 import regex as re
