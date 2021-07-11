@@ -62,11 +62,12 @@ def to_function_json_type(value: CommandType) -> str:
   return result
 
 class Function:
-  def __init__(self, channel: int, name: str, type: CommandType, code: str):
+  def __init__(self, channel: int, name: str, type: CommandType, cooldown: int, code: str):
     logger.debug(f"Commands.Function.__init__(channel: {channel}, name: {name}, type: {type}, code: '{code}'")
     
     self.name: str = name
     self.type: CommandType = type
+    self.cooldown: int = cooldown
     self.code: str = code
     self.channel: int = channel
     self.code_str: str = __command_function_signature__
@@ -129,7 +130,7 @@ class Commands:
     else:
       for channel in json:
         logger.debug(f"Initializing commands for channel id {channel}")
-        self.commands[int(channel)] = [Function(int(channel), command["name"], to_function_type(command["type"]), command["code"]) for command in json[channel]]
+        self.commands[int(channel)] = [Function(int(channel), command["name"], to_function_type(command["type"]), command["cooldown"], command["code"]) for command in json[channel]]
     logger.debug(f"Commands.__init__ done -> {self.__dict__}")
   
   def find(self, channel: int, command: str) -> Function:
@@ -162,6 +163,7 @@ class Commands:
         {
           "name": command.name,
           "type": to_function_json_type(command.type),
+          "cooldown": command.cooldown,
           "code": command.code
         } for command in self.commands[channel]
       ] for channel in self.commands

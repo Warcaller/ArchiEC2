@@ -562,7 +562,7 @@ class UserNotice(Message):
     self.subscriber: Optional[bool] = tags.get("subscriber", "-1") == "1" if tags.get("subscriber", "-1") != "-1" else None
     self.system_message: str = escape_irc(tags.get("system-msg", ""))
     tmi_sent_ts: int = int(tags.get("tmi-sent-ts", "0"))
-    self.tmi_sent_timestamp: Optional[datetime.datetime] = datetime.datetime.utcfromtimestamp(tmi_sent_ts // 1000).replace(microsecond=tmi_sent_ts % (1000 * 1000))
+    self.tmi_sent_timestamp: Optional[datetime.datetime] = datetime.datetime.utcfromtimestamp(tmi_sent_ts // 1000).replace(microsecond=tmi_sent_ts % (1000 * 1000)) if tmi_sent_ts > 0 else None
     self.turbo: Optional[bool] = tags.get("turbo", "-1") == "1" if tags.get("turbo", "-1") != "-1" else None
     self.user_id: int = int(tags.get("user-id", "-1"))
     self.user_type: str = tags.get("user-type", "")

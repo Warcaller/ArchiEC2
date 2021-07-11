@@ -5,27 +5,30 @@ import json
 import sys
 from os import environ as env
 from typing import List, Dict, Optional, Callable
+import datetime
 
 from ArchieMate import Logger
 import ArchieMate.Twitch.IRC as TwitchIRC
 import ArchieMate.Poller as Poller
 import ArchieMate.Commands as Commands
 import ArchieMate.Variables as Variables
+import ArchieMate.Users as Users
+import ArchieMate.Twitch.Helix as TwitchHelix
 
 logger = Logger.get_logger(__name__)
 
 def main() -> int:
   ARCHI_USER_ID: int = 147113965
-  client_id: str = env.get("CLIENT_ID")
-  client_secret: str = env.get("CLIENT_SECRET")
-  oauth: str = env.get("OAUTH")
-  channel: str = "archimond7450"
-  bot_name: str = "archiemate"
+  CLIENT_ID: str = env.get("CLIENT_ID")
+  CLIENT_SECRET: str = env.get("CLIENT_SECRET")
+  OAUTH: str = env.get("OAUTH")
+  CHANNEL: str = "archimond7450"
+  BOT_NAME: str = "archiemate"
   
   poller: Poller.Poller = Poller.Poller()
   
-  twitch_ircs: Dict[int, TwitchIRC.IRC] = {
-    channel: TwitchIRC.IRC(bot_name, channel, oauth, poller)
+  twitch_ircs: Dict[str, TwitchIRC.IRC] = {
+    CHANNEL: TwitchIRC.IRC(BOT_NAME, CHANNEL, OAUTH, poller)
   }
   
   commands_json: dict = {}
@@ -42,8 +45,20 @@ def main() -> int:
   except:
     logger.warning("Cannot parse variables.json")
   
+  users_json: dict = {}
+  try:
+    with open("json/users.json", "r") as file:
+      users_json = json.load(file)
+  except:
+    logger.warning("Cannot parse users.json")
+  
   commands: Commands.Commands = Commands.Commands(commands_json)
   variables: Variables.Variables = Variables.Variables(variables_json)
+  users: Users.Users = Users.Users(users_json)
+  
+  active_users: Dict[str, set[Users.User]] = {
+    channel: set() for channel in twitch_ircs
+  }
   
   DEBUG: bool = env.get("DEBUG", "0") != "0"
   def send_debug_message_off(irc, message): pass
@@ -53,9 +68,16 @@ def main() -> int:
   
   logger.debug("START")
   
+  last_timer: datetime.datetime = datetime.datetime.now()
   done: bool = False
   while not done:
     # Timers - update from DB, write timer to IRC
+    now: datetime.datetime = datetime.datetime.now()
+    if int((now - last_timer).total_seconds()) >= 60:
+      last_timer = now
+      for channel in active_users:
+        for user in active_users[channel]:
+          user.get_channel(channel).points += 1
     
     # Retrieve message from Twitch IRC
     for channel in twitch_ircs.keys():
@@ -68,6 +90,11 @@ def main() -> int:
           
           channel_variables: Dict[str, str] = variables.get_variables(priv_msg.room_id)
           
+          user: Users.User = users.users[priv_msg.user_id]
+          user.get_channel(priv_msg.room_id).mod = "mod" in priv_msg.badges
+          if user not in active_users[priv_msg.room_id]:
+            active_users[channel].append(users.users[user_detail.id])
+          
           if detected_command := Commands.detect_command(priv_msg.message):
             chatters, command, arguments = detected_command
             if ("broadcaster" in priv_msg.badges or "mod" in priv_msg.badges) and command == "command":
@@ -79,13 +106,22 @@ def main() -> int:
                 send_debug_message = send_debug_message_on
               elif arguments == "off":
                 send_debug_message = send_debug_message_off
+            elif channel == CHANNEL and command == "fel":
+              irc.send_message(f"@{priv_msg.display_name} you currently have {user.get_channel(priv_msg.room_id).points} fel.")
               
             elif cmd := commands.find(priv_msg.room_id, command):
               try:
                 irc.send_message(f"{cmd.function(chatters, priv_msg.display_name, arguments, channel_variables, None)}")
               except:
                 logger.exception(f"Channel {priv_msg.room_id} command '!{command}' raised an exception!")
-        
+        elif isinstance(decoded_message, TwitchIRC.Join):
+          join: TwitchIRC.Join = decoded_message
+          user_detail = TwitchHelix.users(join.user)
+          active_users[channel].append(users.users[user_detail.id])
+        elif isinstance(decoded_message, TwitchIRC.Part):
+          part: TwitchIRC.Part = decoded_message
+          user_detail = TwitchHelix.users(part.user)
+          active_users[channel].remove(users.users[user_detail.id])
         elif isinstance(decoded_message, TwitchIRC.Ping):
           ping: TwitchIRC.Ping = decoded_message
           irc.send_pong(ping.server)
@@ -115,6 +151,14 @@ def main() -> int:
       json.dump(variables_json, file)
   except:
     logger.exception("Cannot write to variables.json")
+  
+  users_json: Dict[int, List[Dict[str, str]]] = users.to_json()
+  logger.debug(f"users_json: {users_json}")
+  try:
+    with open("json/users.json", "w") as file:
+      json.dump(users_json, file)
+  except:
+    logger.exception("Cannot write to users.json")
   
   return 0
 
