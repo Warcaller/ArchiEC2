@@ -55,5 +55,5 @@ def users(login: str) -> HelixUser:
   }
   response_json = requests.get(url, headers=headers).json()
   logger.debug(f"GET '{url}' with headers '{headers}' returned '{response_json}'")
-  return response_json["data"][0] if "data" in response_json else {}
+  return HelixUser(response_json["data"][0] if "data" in response_json else {})
   
