@@ -58,11 +58,11 @@ class Users:
             "commands": {
               command: command_detail.timestamp()
               for command in channel_detail.__commands
-              if command_detail := channel_detail.__commands[command]
+              if (command_detail := channel_detail.__commands[command])
             }
           } for channel in user_detail.__channels
-          if channel_detail := user_detail.__channels[channel]
+          if (channel_detail := user_detail.__channels[channel])
         }
       } for user in self.users
-      if user_detail := self.users[user]
+      if (user_detail := self.users[user])
     }
