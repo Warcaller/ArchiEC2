@@ -1,5 +1,5 @@
 import regex as re
-from typing import Optional, Dict, List, Optional
+from typing import Optional, Dict, List
 import datetime
 from enum import Enum
 

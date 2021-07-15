@@ -1,5 +1,5 @@
 import ArchieMate.Logger as Logger
-from types import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 import datetime
 
 logger: Logger = Logger.get_logger(__name__)

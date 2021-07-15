@@ -13,7 +13,7 @@ ENV PYTHONFAULTHANDLER 1
 COPY ./archiemate.com/chatbot/Pipfile ./archiemate.com/chatbot/Pipfile.lock ./archiemate.com/chatbot/ArchieMateBot.py /chatbot/
 ADD ./archiemate.com/chatbot/ArchieMate /chatbot/ArchieMate
 RUN rm -r /chatbot/__pycache__ /chatbot/Archiemate/__pycache__ /chatbot/ArchieMate/Twitch/__pycache__ /chatbot/logs/ArchieMate.log* || true
-RUN mkdir -p /chatbot/logs && touch /chatbot/logs/ArchieMate.log
+RUN mkdir -p /chatbot/logs && touch /chatbot/logs/ArchieMate.log /chatbot/logs/IRC.log
 
 USER root
 
