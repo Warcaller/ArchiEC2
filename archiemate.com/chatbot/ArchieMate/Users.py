@@ -67,7 +67,7 @@ class Users:
       if (user_detail := self.users[user]) and user_detail.id is not None
     }
   
-  def get_user(self, id: int, * user: str, display_name: str) -> User:
+  def get_user(self, id: int, *, user: str, display_name: str) -> User:
     if id not in self.users:
       self.users[id] = User.create_new(id, user, display_name, False)
     return self.users[id]
