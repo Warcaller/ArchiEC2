@@ -117,11 +117,13 @@ def main() -> int:
         elif isinstance(decoded_message, TwitchIRC.Join):
           join: TwitchIRC.Join = decoded_message
           user_detail = TwitchHelix.users(join.user)
-          active_users[channel].append(users.users[user_detail.id])
+          if user_detail.id is not None:
+            active_users[channel].append(users.users[user_detail.id])
         elif isinstance(decoded_message, TwitchIRC.Part):
           part: TwitchIRC.Part = decoded_message
           user_detail = TwitchHelix.users(part.user)
-          active_users[channel].remove(users.users[user_detail.id])
+          if user_detail.id is not None:
+            active_users[channel].remove(users.users[user_detail.id])
         elif isinstance(decoded_message, TwitchIRC.Ping):
           ping: TwitchIRC.Ping = decoded_message
           irc.send_pong(ping.server)

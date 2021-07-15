@@ -44,10 +44,12 @@ class HelixUser:
     """
 
 def users(login: str) -> HelixUser:
+  logger.debug(f"users(login: '{login}')")
   url = f"https://api.twitch.tv/helix/users?login={login}"
   headers = {
     "Client-ID": CLIENT_ID
   }
   response_json = requests.get(url, headers=headers).json()
-  return response_json["data"][0]
+  logger.debug(f"GET '{url}' with headers '{headers}' returned '{response_json}'")
+  return response_json["data"][0] if "data" in response_json else {}
   
