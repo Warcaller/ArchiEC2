@@ -15,7 +15,7 @@ class Channel:
     self.__commands: Dict[str, datetime.datetime] = {
       command: datetime.datetime.utcfromtimestamp(timestamp).replace(microsend=timestamp % (1000 * 1000))
       for command in json["commands"]
-      if timestamp := int(json["commands"][command])
+      if (timestamp := int(json["commands"][command]))
     } if json is not None and "commands" in json else {}
   
   def get_command(self, command: str) -> Dict[str, datetime.datetime]:
@@ -57,8 +57,8 @@ class Users:
             "mod": channel_detail.mod,
             "commands": {
               command: command_detail.timestamp()
-              for command in channel_detail._commands
-              if command_detail := channel_detail._commands[command]
+              for command in channel_detail.__commands
+              if command_detail := channel_detail.__commands[command]
             }
           } for channel in user_detail.__channels
           if channel_detail := user_detail.__channels[channel]
