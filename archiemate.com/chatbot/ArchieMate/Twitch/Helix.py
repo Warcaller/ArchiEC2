@@ -8,9 +8,11 @@ import ArchieMate.Logger as Logger
 logger: Logger = Logger.get_logger(__name__)
 
 CLIENT_ID = env.get("CLIENT_ID")
+OAUTH = env.get("OAUTH")
 
 class HelixUser:
   def __init__(self, json):
+    logger.debug(f"HelixUser.__init__(json: {json})")
     self.id = json.get("id", None)
     self.login = json.get("login", None)
     self.display_name = json.get("display_name", None)
@@ -22,6 +24,7 @@ class HelixUser:
     self.view_count = json.get("view_count", None)
     self.email = json.get("email", None)
     self.created_at = json.get("created_at", None)
+    logger.debug(f"Result: {self.__dict__}")
 
     """
 {
@@ -47,7 +50,8 @@ def users(login: str) -> HelixUser:
   logger.debug(f"users(login: '{login}')")
   url = f"https://api.twitch.tv/helix/users?login={login}"
   headers = {
-    "Client-ID": CLIENT_ID
+    "Client-ID": CLIENT_ID,
+    "Authorization": f"Bearer {OAUTH}"
   }
   response_json = requests.get(url, headers=headers).json()
   logger.debug(f"GET '{url}' with headers '{headers}' returned '{response_json}'")
