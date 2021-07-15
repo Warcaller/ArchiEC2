@@ -64,5 +64,14 @@ class Users:
           if (channel_detail := user_detail.__channels[channel])
         }
       } for user in self.users
-      if (user_detail := self.users[user])
+      if (user_detail := self.users[user]) and user_detail.id is not None
     }
+  
+  def get_user(self, id: int, * user: str, display_name: str) -> User:
+    if id not in self.users:
+      self.users[id] = User.create_new(id, user, display_name, False)
+    return self.users[id]
+  
+  def get_user_by_name(self, user: str) -> User:
+    found = [one_user for one_user in self.users if one_user.user == user]
+    return found[0] if len(found) > 0 else None

@@ -90,10 +90,10 @@ def main() -> int:
           
           channel_variables: Dict[str, str] = variables.get_variables(priv_msg.room_id)
           
-          user: Users.User = users.users[priv_msg.user_id]
+          user: Users.User = users.get_user(priv_msg.user_id, user=priv_msg.user, display_name=priv_msg.display_name)
           user.get_channel(priv_msg.room_id).mod = "mod" in priv_msg.badges
           if user not in active_users[priv_msg.room_id]:
-            active_users[channel].append(users.users[user_detail.id])
+            active_users[channel].add(users.get_user(user))
           
           if detected_command := Commands.detect_command(priv_msg.message):
             chatters, command, arguments = detected_command
@@ -116,14 +116,14 @@ def main() -> int:
                 logger.exception(f"Channel {priv_msg.room_id} command '!{command}' raised an exception!")
         elif isinstance(decoded_message, TwitchIRC.Join):
           join: TwitchIRC.Join = decoded_message
-          user_detail = TwitchHelix.users(join.user)
-          if user_detail.id is not None:
-            active_users[channel].append(users.users[user_detail.id])
+          user_detail: Users.User = users.get_user_by_name(join.user)
+          if user_detail is not None and user_detail.id is not None:
+            active_users[channel].add(users.get_user(user_detail.id))
         elif isinstance(decoded_message, TwitchIRC.Part):
           part: TwitchIRC.Part = decoded_message
-          user_detail = TwitchHelix.users(part.user)
-          if user_detail.id is not None:
-            active_users[channel].remove(users.users[user_detail.id])
+          user_detail: Users.User = users.get_user_by_name(part.user)
+          if user_detail is not None and user_detail.id is not None:
+            active_users[channel].remove(users.get_user(user_detail.id))
         elif isinstance(decoded_message, TwitchIRC.Ping):
           ping: TwitchIRC.Ping = decoded_message
           irc.send_pong(ping.server)
