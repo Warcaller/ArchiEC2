@@ -11,7 +11,7 @@ __globals_commands__: Dict[str, any] = globals()
 logger: Logger = Logger.get_logger(__name__)
 
 __command_regex__ = re.compile(r"^(?P<chatters>(@\w+\s*,?\s*)*)!(?P<command>\w+)(?P<arguments>.*)$")
-__command_function_regex__ = re.compile(r"^(?P<action>\w+)\s+!?(?P<command>\S+)(\s+(type=(?P<type>\w+)\s+))?(?P<response>.*)?$")
+__command_function_regex__ = re.compile(r"^(?P<action>\w+)\s+!?(?P<command>\S+)(\s+(type=(?P<type>\w+)))?(\s+(cooldown=(?P<cooldown>\w+)))?\s+(?P<response>.*)?$")
 
 def detect_command(message: str) -> tuple[list[str], str, str]:
   if regex := __command_regex__.match(message):
@@ -75,11 +75,12 @@ class Function:
     self.last_code_str: str = ""
     self.function: FunctionType = self.compile()
     
-  def update(self, name: str, type: CommandType, code: str):
+  def update(self, name: str, type: CommandType, cooldown: int, code: str):
     logger.debug(f"Commands.Function.update(name: {name}, type: {type}, code: '{code}')")
     
     self.name = name
     self.type = type
+    self.cooldown = cooldown
     self.code = code
     backup_last_code_str = self.last_code_str
     self.last_code_str = self.code_str
@@ -146,15 +147,15 @@ class Commands:
       return True
     return False
   
-  def create(self, channel: int, command: str, type: CommandType, code: str) -> bool:
+  def create(self, channel: int, command: str, type: CommandType, cooldown: int, code: str) -> bool:
     if self.find(channel, command) is None:
-      self.commands[channel].append(Function(channel, command, type, code))
+      self.commands[channel].append(Function(channel, command, type, cooldown, code))
       return True
     return False
   
-  def update(self, channel: int, command: str, type: CommandType, code: str) -> bool:
+  def update(self, channel: int, command: str, type: CommandType, cooldown: int, code: str) -> bool:
     if cmd := self.find(channel, command):
-      cmd.update(command, type, code)
+      cmd.update(command, type, cooldown, code)
       return True
     return False
   
@@ -176,7 +177,8 @@ def command_function(arguments: str, channel: int, commands: Commands):
     if "action" in group_dict and "command" in group_dict and group_dict["action"] in ("add", "create", "edit", "update", "delete", "remove"):
       action: str = group_dict["action"]
       command: str = group_dict["command"]
-      cmd_type: CommandType = to_function_type("string" if "type" not in group_dict or group_dict["type"] is None else group_dict["type"])
+      cmd_type: CommandType = to_function_type(group_dict.get("type", "string"))
+      cooldown: int = int(group_dict.get("cooldown", 0))
       response: str = "" if "response" not in group_dict or group_dict["response"] is None else group_dict["response"].strip()
       
       if action in ("delete", "remove"):
@@ -188,7 +190,7 @@ def command_function(arguments: str, channel: int, commands: Commands):
         return f"Cannot delete command '!{command}'!"
       elif action in ("add", "create"):
         try:
-          if commands.create(channel, command, cmd_type, response):
+          if commands.create(channel, command, cmd_type, cooldown, response):
             return f"Command '!{command}' is sucessfully created."
           else:
             return f"Cannot create new command '!{command}' because it already exists!"
