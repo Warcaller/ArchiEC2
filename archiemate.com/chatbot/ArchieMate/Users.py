@@ -7,7 +7,7 @@ logger: Logger = Logger.get_logger(__name__)
 class Channel:
   @staticmethod
   def create_new(id: int):
-    return Channel(id=id)
+    return Channel()
   
   def __init__(self, json: Optional[Dict[str, Any]] = None):
     self.points: int = int(json["points"]) if json is not None and "points" in json else 0
