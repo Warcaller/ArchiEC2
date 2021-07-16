@@ -29,9 +29,9 @@ class User:
     return User(id, user=user, display_name=display_name, bot=bot)
   
   def __init__(self, json: Optional[Dict[str, Any]], **kwargs):
-    self.user: str = json["user"] if "user" in json else kwargs["user"]
+    self.user: str = json["user"] if json is not None and "user" in json else kwargs["user"]
     self.display_name: str = json["display_name"] if json is not None and "display_name" in json else kwargs["display_name"]
-    self.bot: str = json["bot"] if "bot" in json else kwargs["bot"]
+    self.bot: bool = json["bot"] if json is not None and "bot" in json else kwargs["bot"]
     self.__channels: Dict[int, Channel] = {
       channel: Channel(json["channels"][channel]) for channel in json["channels"]
     } if json is not None and "channels" in json else {}
