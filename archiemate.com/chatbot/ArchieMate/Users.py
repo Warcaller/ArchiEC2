@@ -64,7 +64,7 @@ class Users:
           if (channel_detail := user_detail.__channels[channel])
         }
       } for user in self.users
-      if (user_detail := self.users[user]) and user_detail.id is not None
+      if (user_detail := self.users[user])
     }
   
   def get_user(self, id: int, *, user: str, display_name: str) -> User:
