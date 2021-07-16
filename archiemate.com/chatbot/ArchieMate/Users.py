@@ -9,7 +9,7 @@ class Channel:
   def create_new(id: int):
     return Channel(id=id)
   
-  def __init__(self, json: Optional[Dict[str, Any]]):
+  def __init__(self, json: Optional[Dict[str, Any]] = None):
     self.points: int = int(json["points"]) if json is not None and "points" in json else 0
     self.mod: bool = json["mod"] if json is not None and "mod" in json else False
     self.__commands: Dict[str, datetime.datetime] = {
@@ -28,7 +28,7 @@ class User:
   def create_new(user: str, display_name: str, bot: bool):
     return User(user=user, display_name=display_name, bot=bot)
   
-  def __init__(self, json: Optional[Dict[str, Any]], **kwargs):
+  def __init__(self, json: Optional[Dict[str, Any]] = None, **kwargs):
     self.user: str = json["user"] if json is not None and "user" in json else kwargs["user"]
     self.display_name: str = json["display_name"] if json is not None and "display_name" in json else kwargs["display_name"]
     self.bot: bool = json["bot"] if json is not None and "bot" in json else kwargs["bot"]
