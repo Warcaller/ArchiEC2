@@ -94,7 +94,7 @@ def main() -> int:
           if priv_msg.room_id not in active_users:
             active_users[priv_msg.room_id] = set()
           if user not in active_users[priv_msg.room_id]:
-            active_users[priv_msg.room_id].add(users.get_user(user.user, user=priv_msg.user, display_name=priv_msg.display_name))
+            active_users[priv_msg.room_id].add(users.get_user(priv_msg.user_id, user=priv_msg.user, display_name=priv_msg.display_name))
           
           if detected_command := Commands.detect_command(priv_msg.message):
             chatters, command, arguments = detected_command
