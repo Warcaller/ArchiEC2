@@ -177,8 +177,8 @@ def command_function(arguments: str, channel: int, commands: Commands):
     if "action" in group_dict and "command" in group_dict and group_dict["action"] in ("add", "create", "edit", "update", "delete", "remove"):
       action: str = group_dict["action"]
       command: str = group_dict["command"]
-      cmd_type: CommandType = to_function_type(group_dict.get("type", "string"))
-      cooldown: int = int(group_dict.get("cooldown", 0))
+      cmd_type: CommandType = to_function_type(group_dict.get("type", "string") if group_dict.get("type", "string") is not None else "string")
+      cooldown: int = int(group_dict.get("cooldown", 0) if group_dict.get("cooldown", 0) is not None else 0)
       response: str = "" if "response" not in group_dict or group_dict["response"] is None else group_dict["response"].strip()
       
       if action in ("delete", "remove"):
