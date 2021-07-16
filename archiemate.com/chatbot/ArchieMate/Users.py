@@ -73,5 +73,5 @@ class Users:
     return self.users[id]
   
   def get_user_by_name(self, user: str) -> User:
-    found = [one_user for one_user in self.users if (one_user_detail := self.users[one_user]) and one_user_detail.user == user]
+    found = [one_user_detail for one_user in self.users if (one_user_detail := self.users[one_user]) and one_user_detail.user == user]
     return found[0] if len(found) > 0 else None
