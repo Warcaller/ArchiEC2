@@ -6,7 +6,7 @@ logger: Logger = Logger.get_logger(__name__)
 
 class Channel:
   @staticmethod
-  def create_new(id: int):
+  def create_new():
     return Channel()
   
   def __init__(self, json: Optional[Dict[str, Any]] = None):
@@ -38,7 +38,7 @@ class User:
   
   def get_channel(self, id: int) -> Channel:
     if id not in self.channels:
-      self.channels[id] = Channel.create_new(id)
+      self.channels[id] = Channel.create_new()
     return self.channels[id]
 
 class Users:
