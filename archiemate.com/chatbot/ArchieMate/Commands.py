@@ -180,6 +180,10 @@ def command_function(arguments: str, channel: int, commands: Commands):
       cmd_type: CommandType = to_function_type(group_dict.get("type", "string") if group_dict.get("type", "string") is not None else "string")
       cooldown: int = int(group_dict.get("cooldown", 0) if group_dict.get("cooldown", 0) is not None else 0)
       response: str = "" if "response" not in group_dict or group_dict["response"] is None else group_dict["response"].strip()
+      if response.startswith("\""):
+        response = response[1:]
+      if response.endswith("\""):
+        response = response[:-1]
       
       if action in ("delete", "remove"):
         try:
