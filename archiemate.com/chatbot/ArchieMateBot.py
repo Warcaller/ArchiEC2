@@ -56,9 +56,7 @@ def main() -> int:
   variables: Variables.Variables = Variables.Variables(variables_json)
   users: Users.Users = Users.Users(users_json)
   
-  active_users: Dict[str, set[Users.User]] = {
-    channel: set() for channel in twitch_ircs
-  }
+  active_users: Dict[int, set[Users.User]] = {}
   
   DEBUG: bool = env.get("DEBUG", "0") != "0"
   def send_debug_message_off(irc, message): pass
@@ -92,6 +90,8 @@ def main() -> int:
           
           user: Users.User = users.get_user(priv_msg.user_id, user=priv_msg.user, display_name=priv_msg.display_name)
           user.get_channel(priv_msg.room_id).mod = "mod" in priv_msg.badges
+          if priv_msg.room_id not in active_users:
+            active_users[priv_msg.room_id] = set()
           if user not in active_users[priv_msg.room_id]:
             active_users[channel].add(users.get_user(user))
           
