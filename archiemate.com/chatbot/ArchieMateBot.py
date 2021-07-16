@@ -76,6 +76,7 @@ def main() -> int:
       for channel in active_users:
         for user in active_users[channel]:
           user.get_channel(channel).points += 1
+      active_users = {}
     
     # Retrieve message from Twitch IRC
     for channel in twitch_ircs.keys():
@@ -117,13 +118,13 @@ def main() -> int:
         elif isinstance(decoded_message, TwitchIRC.Join):
           join: TwitchIRC.Join = decoded_message
           user_detail: Users.User = users.get_user_by_name(join.user)
-          if user_detail is not None and user_detail.id is not None:
-            active_users[channel].add(users.get_user(user_detail.id))
+          #if user_detail is not None:
+          #  active_users[channel].add(users.get_user(user_detail.id))
         elif isinstance(decoded_message, TwitchIRC.Part):
           part: TwitchIRC.Part = decoded_message
           user_detail: Users.User = users.get_user_by_name(part.user)
-          if user_detail is not None and user_detail.id is not None:
-            active_users[channel].remove(users.get_user(user_detail.id))
+          #if user_detail is not None and user_detail.id is not None:
+          #  active_users[channel].remove(users.get_user(user_detail.id))
         elif isinstance(decoded_message, TwitchIRC.Ping):
           ping: TwitchIRC.Ping = decoded_message
           irc.send_pong(ping.server)
