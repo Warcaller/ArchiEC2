@@ -90,7 +90,8 @@ def main() -> int:
           channel_variables: Dict[str, str] = variables.get_variables(priv_msg.room_id)
           
           user: Users.User = users.get_user(priv_msg.user_id, user=priv_msg.user, display_name=priv_msg.display_name)
-          user.get_channel(priv_msg.room_id).mod = "mod" in priv_msg.badges
+          user_channel: Users.Channel = user.get_channel(priv_msg.room_id)
+          user_channel.mod = "mod" in priv_msg.badges
           if priv_msg.room_id not in active_users:
             active_users[priv_msg.room_id] = set()
           if user not in active_users[priv_msg.room_id]:
@@ -108,7 +109,7 @@ def main() -> int:
               elif arguments == "off":
                 send_debug_message = send_debug_message_off
             elif channel == CHANNEL and command == "fel":
-              irc.send_message(f"@{priv_msg.display_name} you currently have {user.get_channel(priv_msg.room_id).points} fel.")
+              irc.send_message(f"@{priv_msg.display_name} you currently have {user_channel.points} fel.")
               
             elif cmd := commands.find(priv_msg.room_id, command):
               try:
@@ -171,3 +172,4 @@ if __name__ == '__main__':
   code: int = main()
   logger.debug("TERMINATED")
   sys.exit(code)
+
