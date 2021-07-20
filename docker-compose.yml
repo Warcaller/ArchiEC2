@@ -7,8 +7,8 @@ services:
       context: .
       dockerfile: ./nginx/Dockerfile
     ports:
-      - 80:80
-      - 443:443
+      - "80:80"
+      - "443:443"
     volumes:
       - archimond7450_backend_static:/usr/share/nginx/html/archimond7450.com/backend
       - archiemate_backend_static:/usr/share/nginx/html/archiemate.com/backend
@@ -54,7 +54,7 @@ services:
       - ./archiemate.com/chatbot/logs:/chatbot/logs
       - ./archiemate.com/chatbot/json/:/chatbot/json/
     ports:
-      - 7450:7450
+      - "7450:7450"
     expose:
       - 7450
   archiemate_backend:
