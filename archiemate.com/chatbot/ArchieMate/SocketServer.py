@@ -39,7 +39,7 @@ class SocketServer:
     while self.raw_sockets.qsize() > 0:
       new_socket: socket.socket = self.raw_sockets.get(0)
       logger.debug(f"new socket {new_socket} - something connected!")
-      self.sockets.append(SocketServer.SocketInfo(Socket.Socket(server_socket=new_socket), SocketType.Unknown, {}))
+      self.sockets.append(SocketServer.SocketInfo(Socket.Socket(poller=self.poller, server_socket=new_socket), SocketType.Unknown, {}))
       dead_sockets = [socket for socket in self.sockets if socket.state.get("dead") == True]
       for dead_socket in dead_sockets:
         logger.debug(f"removing dead socket {dead_socket.__dict__}")
