@@ -58,6 +58,7 @@ class ThreadedClient:
     self.thread1: threading.Thread = None
     
     self.socket: socket.socket = None
+    self.sound: pygame.sound.Sound = None
     
     self.periodic_call()
   
@@ -100,10 +101,13 @@ class ThreadedClient:
     elif self.connected and self.queue.size() > 0:
       mp3_data = self.queue.get(0)
       sound_data = BytesIO(mp3_data)
-      sound = pygame.mixer.Sound(sound_data)
-      sound.set_volume(0.3)
-      sound_length = int(sound.get_length() * 1000)
-      sound.play()
+      if self.sound is not None:
+        del self.sound
+        self.sound = None
+      self.sound = pygame.mixer.Sound(sound_data)
+      self.sound.set_volume(0.3)
+      sound_length = int(self.sound.get_length() * 1000)
+      self.sound.play()
       self.master.after(sound_length + 2000)
     else:
       self.master.after(50, self.periodic_call)
