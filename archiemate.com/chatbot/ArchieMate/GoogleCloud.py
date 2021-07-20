@@ -22,6 +22,8 @@ def text_to_ssml(text: str) -> str:
   logger.debug(f"text_to_ssml(text: '{text}')")
   escaped_text = html.escape(text)
   logger.debug(f"Escaped text: '{escaped_text}'")
-  ssml = f"<speak>{escaped_text.replace('\n', '\n<break time=\"1s\"/>')}</speak>"
+  lined_text = escaped_text.replace('\n', '\n<break time="1s"/>')
+  logger.debug(f"Lined text: {lined_text}")
+  ssml = f"<speak>{lined_text}</speak>"
   logger.debug(f"Result: '{ssml}'")
   return ssml
