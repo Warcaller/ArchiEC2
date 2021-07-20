@@ -71,7 +71,7 @@ class Poller:
     for fd, flag in self.poller.poll(timeout):
       if flag & (select.POLLIN | select.POLLPRI):
         logger.debug(f"socket {self.sockets[fd].socket} is receiving data.")
-        if self.server is not None and self.server.fileno() == fd:
+        if self.server is not None and self.server.socket.fileno() == fd:
           new_socket, address = self.server.accept()
           logger.debug(f"new connection from {address} => new socket {new_socket}")
           self.server_sockets.put(new_socket)
