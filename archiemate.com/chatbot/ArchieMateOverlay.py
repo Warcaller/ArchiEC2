@@ -105,7 +105,7 @@ class ThreadedClient:
       if self.sound is not None:
         del self.sound
         self.sound = None
-      self.sound = pygame.mixer.Sound(buffer=sound_data)
+      self.sound = pygame.mixer.Sound(sound_data)
       self.sound.set_volume(0.3)
       sound_length = int(self.sound.get_length() * 1000)
       self.sound.play()

@@ -12,7 +12,7 @@ def ssml_to_audio(ssml_text: str) -> bytes:
     language_code="en-US", name="en-US-Wavenet-J"
   )
   audio_config = texttospeech.AudioConfig(
-    audio_encoding = texttospeech.AudioEncoding.LINEAR16
+    audio_encoding = texttospeech.AudioEncoding.OGG_OPUS
   )
   response = client.synthesize_speech(
     input=synthesis_input, voice=voice, audio_config=audio_config)
