@@ -6,10 +6,10 @@ import ArchieMate.Poller as Poller
 logger = Logger.get_logger(__name__)
 
 class Socket:
-  def __init__(self, address: str, port: int, poller: Poller.Poller, *, server: socket.socket = None):
+  def __init__(self, address: str, port: int, poller: Poller.Poller, *, server: socket.socket = None, server_socket: socket.socket = None):
     logger.debug(f"Socket.__init__(address: '{address}', port: {port}, server: {server})")
-    self.socket = socket.socket() if server is None else server
-    if server is None:
+    self.socket = socket.socket() if server is None else server if server_socket is None else server_socket
+    if server is None and server_socket is None:
       self.socket.connect((address, port))
     self.socket.setblocking(False)
     self.poller = poller
