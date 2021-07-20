@@ -77,8 +77,8 @@ class ThreadedClient:
         self.socket.connect(("3.122.99.185", 7450))
         self.socket.send(f"AUTH OVERLAY {self.entry_token.get()}".encode())
         if (self.socket.recv() != "AUTH OK"):
-          self.entry_token["state"] = "normal"
-          self.btn_login["state"] = "normal"
+          self.gui.entry_token["state"] = "normal"
+          self.gui.btn_login["state"] = "normal"
           del self.socket
           self.socket = None
           self.queue.queue.clear()
@@ -94,8 +94,8 @@ class ThreadedClient:
         self.socket = None
         self.connected = False
         self.queue.queue.clear()
-        self.entry_token["state"] = "normal"
-        self.btn_login["state"] = "normal"
+        self.gui.entry_token["state"] = "normal"
+        self.gui.btn_login["state"] = "normal"
       self.master.after(50, self.periodic_call)
     elif self.connected and self.queue.size() > 0:
       mp3_data = self.queue.get(0)
