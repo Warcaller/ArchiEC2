@@ -101,12 +101,13 @@ class ThreadedClient:
       self.master.after(50, self.periodic_call)
     elif self.connected and self.queue.qsize() > 0:
       mp3_data = self.queue.get(0)
-      print(mp3_data)
-      mp3_binary = BytesIO(mp3_data)
+      TTS_FILE = "tts.mp3"
+      with open(TTS_FILE, "wb") as mp3_file:
+        mp3_file.write(mp3_data)
       if self.sound is not None:
         del self.sound
         self.sound = None
-      self.sound = pygame.mixer.Sound(mp3_binary)
+      self.sound = pygame.mixer.Sound(TTS_FILE)
       self.sound.set_volume(0.3)
       sound_length = int(self.sound.get_length() * 1000)
       self.sound.play()
@@ -116,7 +117,10 @@ class ThreadedClient:
   
   def workerThread1(self):
     while self.running:
-      self.queue.put(self.socket.recv(1024*1024*1024))
+      received_bytes: bytes = b""
+      while received_bytes[-7:] != b"--END--":
+        received_bytes += self.socket.recv(1024*1024*1024)
+      self.queue.put(received_bytes[:-7])
     self.socket.send("END")
 
 def main():
