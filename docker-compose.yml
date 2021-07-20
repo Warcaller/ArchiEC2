@@ -53,6 +53,8 @@ services:
     volumes:
       - ./archiemate.com/chatbot/logs:/chatbot/logs
       - ./archiemate.com/chatbot/json/:/chatbot/json/
+    ports:
+      - 7450:7450
   archiemate_backend:
     restart: unless-stopped
     build:

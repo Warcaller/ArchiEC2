@@ -1,6 +1,7 @@
 FROM python:3.9-slim
 
 RUN groupadd -g 1000 ubuntu && useradd --create-home --home-dir /chatbot --shell /bin/bash -g ubuntu -u 1000 ubuntu
+EXPOSE 7450
 
 USER ubuntu
 WORKDIR /chatbot
