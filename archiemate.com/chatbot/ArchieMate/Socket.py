@@ -54,4 +54,3 @@ class Socket:
     logger.debug(f"Socket.__del__()")
     self.poller.remove_socket(self.socket)
     self.socket.close()
-    del self.socket
