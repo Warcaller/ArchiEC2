@@ -102,7 +102,7 @@ class ThreadedClient:
     elif self.connected and self.queue.qsize() > 0:
       mp3_data = self.queue.get(0)
       with open("tts.mp3", "wb") as mp3_file:
-        mp3_data.write(mp3_data)
+        mp3_file.write(mp3_data)
       if self.sound is not None:
         del self.sound
         self.sound = None
