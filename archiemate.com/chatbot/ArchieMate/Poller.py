@@ -70,12 +70,12 @@ class Poller:
     logger.debug(f"Poller.poll(timeout: {timeout})")
     for fd, flag in self.poller.poll(timeout):
       if flag & (select.POLLIN | select.POLLPRI):
-        logger.debug(f"socket {self.sockets[fd].socket} is receiving data.")
         if self.server is not None and self.server.socket.fileno() == fd:
           new_socket, address = self.server.accept()
           logger.debug(f"new connection from {address} => new socket {new_socket}")
           self.server_sockets.put(new_socket)
         else:
+          logger.debug(f"socket {self.sockets[fd].socket} is receiving data.")
           for data in self.sockets[fd].socket.recv(8192).split(b"\r\n"):
             if len(data) > 0:
               logger.debug(f"saving data '{data}' to read queue.")
