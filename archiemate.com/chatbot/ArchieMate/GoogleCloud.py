@@ -27,3 +27,15 @@ def text_to_ssml(text: str) -> str:
   ssml = f"<speak>{lined_text}</speak>"
   logger.debug(f"Result: '{ssml}'")
   return ssml
+
+def user_text_to_ssml(display_name: str, text: str) -> str:
+  logger.debug(f"user_text_to_ssml(display_name: '{display_name}', text: '{text}')")
+  escaped_text = html.escape(text)
+  logger.debug(f"Escaped text: '{escaped_text}'")
+  lined_text = escaped_text.replace('\n', '\n<break time="1s"/>')
+  logger.debug(f"Lined text: {lined_text}")
+  joined_text = f"<emphasis level=\"strong\">{display_name}</emphasis> said:<break time=\"500\"/>{text}"
+  logger.debug(f"Joined text: {joined_text}")
+  ssml = f"<speak>{lined_text}</speak>"
+  logger.debug(f"Result: '{ssml}'")
+  return ssml

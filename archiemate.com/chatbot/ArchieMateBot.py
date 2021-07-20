@@ -125,10 +125,10 @@ def main() -> int:
             if ("broadcaster" in priv_msg.badges or "mod" in priv_msg.badges) and command == "command":
               irc.send_message(f"@{priv_msg.display_name} {Commands.command_function(arguments, priv_msg.room_id, commands)}")
             elif ("broadcaster" in priv_msg.badges or "mod" in priv_msg.badges) and command == "test_tts":
-              text: str = f"<emphasis level=\"strong\">{priv_msg.display_name}</emphasis> said:<break time=\"500\"/>{priv_msg.message}"
-              audio: bytes = GoogleCloud.ssml_to_audio(GoogleCloud.text_to_ssml(text))
+              text: str = GoogleCloud.user_text_to_ssml(priv_msg.display_name, priv_msg.message)
+              audio: bytes = GoogleCloud.ssml_to_audio(text)
               for socket in socket_server.sockets:
-                socket.send(audio)
+                socket.socket.send(audio)
             elif priv_msg.user_id == ARCHI_USER_ID and command == "end":
               done = True
             elif priv_msg.user_id == ARCHI_USER_ID and command == "debug":
