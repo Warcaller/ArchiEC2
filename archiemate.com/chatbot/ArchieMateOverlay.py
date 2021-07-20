@@ -115,7 +115,7 @@ class ThreadedClient:
   
   def workerThread1(self):
     while self.running:
-      self.queue.put(self.socket.recv(1024*1024*1024))
+      self.queue.put(self.socket.recv(1024*1024*1024)[:-2])
     self.socket.send("END")
 
 def main():
