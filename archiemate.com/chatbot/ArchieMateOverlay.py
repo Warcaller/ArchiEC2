@@ -19,12 +19,13 @@ class GUI(tk.Frame):
     
     self.pack()
     
-    self.canvas = tk.Canvas(self, width=200, height=200)
+    self.frame = tk.Frame(self, width=200, height=200)
+    self.frame.pack()
     
-    self.entry_token = tk.Entry(self.canvas, show="", width=100)
+    self.entry_token = tk.Entry(self.frame, show="*", width=100)
     self.entry_token.pack(side="top")
     
-    self.btn_login = tk.Button(self.canvas, text="Login", fg="blue", bg="white", command=self.btn_login_click)
+    self.btn_login = tk.Button(self.frame, text="Login", fg="blue", bg="white", command=self.btn_login_click)
     self.btn_login.pack(side="bottom")
   
   def btn_login_click(self):
@@ -55,11 +56,8 @@ class ThreadedClient:
     self.thread1.start()"""
     
     self.thread1: threading.Thread = None
-    self.thread1.start()
     
     self.socket: socket.socket = None
-    self.socket.connect(("3.122.99.185", 7450))
-    self.socket.send("AUTH OVERLAY ")
     
     self.periodic_call()
   
@@ -95,6 +93,9 @@ class ThreadedClient:
           del self.socket
         self.socket = None
         self.connected = False
+        self.queue.queue.clear()
+        self.entry_token["state"] = "normal"
+        self.btn_login["state"] = "normal"
       self.master.after(50, self.periodic_call)
     elif self.connected and self.queue.size() > 0:
       mp3_data = self.queue.get(0)

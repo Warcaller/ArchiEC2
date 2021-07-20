@@ -55,6 +55,8 @@ services:
       - ./archiemate.com/chatbot/json/:/chatbot/json/
     ports:
       - 7450:7450
+    expose:
+      - 7450
   archiemate_backend:
     restart: unless-stopped
     build:
