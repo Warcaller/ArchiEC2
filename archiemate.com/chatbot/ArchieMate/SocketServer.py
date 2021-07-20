@@ -25,6 +25,7 @@ class SocketServer:
   def __init__(self, poller: Poller.Poller):
     logger.debug(f"SocketServer.__init__(poller: {poller})")
     self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    self.socket.setblocking(False)
     self.socket.bind(('127.0.0.1', int(env.get("ARCHIEMATE_SOCKET_SERVER_PORT"))))
     self.socket.listen()
     self.poller = poller
