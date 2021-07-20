@@ -1,5 +1,6 @@
 import socket
 import queue
+from os import environ as env
 
 from typing import NamedTuple, List, Dict, Any
 from enum import Enum
@@ -23,7 +24,7 @@ class SocketServer:
   
   def __init__(self, poller: Poller.Poller):
     self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.socket.bind(('127.0.0.1', 7627))
+    self.socket.bind(('127.0.0.1', int(env.get("ARCHIEMATE_SOCKET_SERVER_PORT"))
     self.socket.listen()
     self.poller = poller
     self.raw_sockets: queue.Queue = queue.Queue()
