@@ -26,7 +26,7 @@ class SocketServer:
     logger.debug(f"SocketServer.__init__(poller: {poller})")
     self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.socket.setblocking(False)
-    self.socket.bind(('localhost', int(env.get("ARCHIEMATE_SOCKET_SERVER_PORT"))))
+    self.socket.bind(('0.0.0.0', int(env.get("ARCHIEMATE_SOCKET_SERVER_PORT"))))
     self.socket.listen()
     self.poller = poller
     self.raw_sockets: queue.Queue = queue.Queue()
