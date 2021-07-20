@@ -101,8 +101,10 @@ class ThreadedClient:
       self.master.after(50, self.periodic_call)
     elif self.connected and self.queue.qsize() > 0:
       mp3_data = self.queue.get(0)
+      mp3_bytes: BytesIO = BytesIO(mp3_data)
       with open("tts.mp3", "wb") as mp3_file:
-        mp3_file.write(mp3_data)
+        mp3_file.write(mp3_bytes)
+        print("Writing")
       if self.sound is not None:
         del self.sound
         self.sound = None
@@ -116,7 +118,7 @@ class ThreadedClient:
   
   def workerThread1(self):
     while self.running:
-      self.queue.put(self.socket.recv(1024*1024*1024)[:-2])
+      self.queue.put(self.socket.recv(1024*1024*1024))
     self.socket.send("END")
 
 def main():

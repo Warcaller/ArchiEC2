@@ -17,7 +17,7 @@ class Socket:
   
   def send(self, string: Union[str, bytes]):
     logger.debug(f"Socket.send(string: '{string}')")
-    string = f"{string.strip()}\r\n"
+    string = f"{string.strip()}\r\n" if isinstance(string, str) else string
     self.poller.write_to_socket(self.socket, string.encode() if isinstance(string, str) else string)
   
   def recv(self) -> str:
