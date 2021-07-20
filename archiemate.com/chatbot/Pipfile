@@ -10,6 +10,8 @@ google-api-python-client = "*"
 regex = "*"
 requests = "*"
 websocket-client = "*"
+google-cloud-texttospeech = "*"
+pygame = "*"
 
 [dev-packages]
 pylint = "*"

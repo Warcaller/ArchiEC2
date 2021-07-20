@@ -1,24 +1,24 @@
 import socket
-import select
-
+from typing import Union
 import ArchieMate.Logger as Logger
 import ArchieMate.Poller as Poller
 
 logger = Logger.get_logger(__name__)
 
 class Socket:
-  def __init__(self, address: str, port: int, poller: Poller.Poller):
-    logger.debug(f"Socket.__init__(address: '{address}', port: {port})")
-    self.socket = socket.socket()
-    self.socket.connect((address, port))
+  def __init__(self, address: str, port: int, poller: Poller.Poller, *, server: socket.socket = None):
+    logger.debug(f"Socket.__init__(address: '{address}', port: {port}, server: {server})")
+    self.socket = socket.socket() if server is None else server
+    if server is None:
+      self.socket.connect((address, port))
     self.socket.setblocking(False)
     self.poller = poller
     self.poller.add_socket(self.socket)
   
-  def send(self, string: str):
+  def send(self, string: Union[str, bytes]):
     logger.debug(f"Socket.send(string: '{string}')")
     string = f"{string.strip()}\r\n"
-    self.poller.write_to_socket(self.socket, string.encode())
+    self.poller.write_to_socket(self.socket, string.encode() if isinstance(string, str) else string)
   
   def recv(self) -> str:
     logger.debug("Socket.recv()")

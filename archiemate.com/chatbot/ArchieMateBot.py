@@ -14,6 +14,8 @@ import ArchieMate.Commands as Commands
 import ArchieMate.Variables as Variables
 import ArchieMate.Users as Users
 import ArchieMate.Twitch.Helix as TwitchHelix
+import ArchieMate.SocketServer as SocketServer
+import ArchieMate.GoogleCloud as GoogleCloud
 
 logger = Logger.get_logger(__name__)
 
@@ -22,6 +24,7 @@ def main() -> int:
   CLIENT_ID: str = env.get("CLIENT_ID")
   CLIENT_SECRET: str = env.get("CLIENT_SECRET")
   OAUTH: str = env.get("OAUTH")
+  WEBSITE_SOCKET_AUTH_KEY = env.get("WEBSITE_SOCKET_AUTH_KEY")
   CHANNEL: str = "archimond7450"
   BOT_NAME: str = "archiemate"
   
@@ -30,6 +33,8 @@ def main() -> int:
   twitch_ircs: Dict[str, TwitchIRC.IRC] = {
     CHANNEL: TwitchIRC.IRC(BOT_NAME, CHANNEL, OAUTH, poller)
   }
+  
+  socket_server: SocketServer.SocketServer = SocketServer.SocketServer(poller)
   
   commands_json: dict = {}
   try:
@@ -78,6 +83,24 @@ def main() -> int:
           user.get_channel(channel).points += 1
       active_users = {}
     
+    socket_server.check_sockets()
+    for socket in socket_server.sockets:
+      if msg := socket.socket.recv():
+        if not socket.state.get("authenticated", False): # Fresh socket - expect login
+          if msg.startswith("AUTH OVERLAY "):
+            socket.state["type"] = SocketServer.SocketType.Overlay
+            if msg == f"AUTH OVERLAY {WEBSITE_SOCKET_AUTH_KEY}":
+              socket.state["authenticated"] = True
+              socket.send("AUTH OK")
+            else:
+              socket.state["dead"] = True
+              socket.send("AUTH NOK")
+          else:
+            socket.state["dead"] = True
+            socket.send("AUTH NOK")
+        elif msg == "END":
+          socket.state["dead"] = True
+    
     # Retrieve message from Twitch IRC
     for channel in twitch_ircs.keys():
       irc: TwitchIRC.IRC = twitch_ircs[channel]
@@ -101,6 +124,11 @@ def main() -> int:
             chatters, command, arguments = detected_command
             if ("broadcaster" in priv_msg.badges or "mod" in priv_msg.badges) and command == "command":
               irc.send_message(f"@{priv_msg.display_name} {Commands.command_function(arguments, priv_msg.room_id, commands)}")
+            elif ("broadcaster" in priv_msg.badges or "mod" in priv_msg.badges) and command == "test_tts":
+              text: str = f"<emphasis level=\"strong\">{priv_msg.display_name}</emphasis> said:<break time=\"500\"/>{priv_msg.message}"
+              audio: bytes = GoogleCloud.ssml_to_audio(GoogleCloud.text_to_ssml(text))
+              for socket in socket_server.sockets:
+                socket.send(audio)
             elif priv_msg.user_id == ARCHI_USER_ID and command == "end":
               done = True
             elif priv_msg.user_id == ARCHI_USER_ID and command == "debug":

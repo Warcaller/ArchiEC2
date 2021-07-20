@@ -24,18 +24,31 @@ class Poller:
     logger.debug("Poller.__init__()")
     self.poller: select.poll = select.poll()
     self.sockets: Dict[int, Poller.SocketInfo] = {}
+    self.server: Poller.SocketInfo = None
+    self.server_sockets: queue.Queue = None
   
-  def add_socket(self, socket: socket.socket):
-    logger.debug(f"Poller.add_socket(socket: {socket})")
-    self.sockets[socket.fileno()] = Poller.SocketInfo(socket, queue.Queue(), queue.Queue(), False)
+  def add_socket(self, socket: socket.socket, *, server: bool = False, server_sockets: queue.Queue = None):
+    logger.debug(f"Poller.add_socket(socket: {socket}, server: {server})")
+    if (server):
+      self.server = Poller.SocketInfo(socket, queue.Queue(), queue.Queue(), False)
+      self.server_sockets = server_sockets
+    else:
+      self.sockets[socket.fileno()] = Poller.SocketInfo(socket, queue.Queue(), queue.Queue(), False)
     self.poller.register(socket, READ_ONLY)
   
   def remove_socket(self, socket: socket.socket):
     logger.debug(f"Poller.remove_socket(socket: {socket})")
-    while not self.sockets[socket.fileno()].queue_write.empty():
-      self.poll(POLLER_FLUSH_TIMEOUT)
+    if self.server.socket == socket:
+      while not self.server.queue_write.empty():
+        self.poll(POLLER_FLUSH_TIMEOUT)
+    else:
+      while not self.sockets[socket.fileno()].queue_write.empty():
+        self.poll(POLLER_FLUSH_TIMEOUT)
     self.poller.unregister(socket)
-    del self.sockets[socket.fileno()]
+    if self.server.socket == socket:
+      self.server = None
+    else:
+      del self.sockets[socket.fileno()]
   
   def write_to_socket(self, socket: socket.socket, data: bytes):
     logger.debug(f"Poller.write_to_socket(socket: {socket}, data: '{data}')")
@@ -58,10 +71,15 @@ class Poller:
     for fd, flag in self.poller.poll(timeout):
       if flag & (select.POLLIN | select.POLLPRI):
         logger.debug(f"socket {self.sockets[fd].socket} is receiving data.")
-        for data in self.sockets[fd].socket.recv(8192).split(b"\r\n"):
-          if len(data) > 0:
-            logger.debug(f"saving data '{data}' to read queue.")
-            self.sockets[fd].queue_read.put(data+b"\n")
+        if self.server.fileno() == fd:
+          new_socket, address = self.server.accept()
+          logger.debug(f"new connection from {address} => new socket {new_socket}")
+          self.server_sockets.put(new_socket)
+        else:
+          for data in self.sockets[fd].socket.recv(8192).split(b"\r\n"):
+            if len(data) > 0:
+              logger.debug(f"saving data '{data}' to read queue.")
+              self.sockets[fd].queue_read.put(data+b"\n")
       elif flag & select.POLLHUP or flag & select.POLLERR:
         logger.debug(f"socket {self.sockets[fd].socket} is dead.")
         self.poller.unregister(self.sockets[fd].socket)
