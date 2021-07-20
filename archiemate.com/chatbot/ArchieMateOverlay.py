@@ -77,7 +77,8 @@ class ThreadedClient:
         self.socket = socket.socket()
         self.socket.connect(("3.122.99.185", 7450))
         self.socket.send(f"AUTH OVERLAY {self.gui.entry_token.get()}".encode())
-        if (self.socket.recv(1024*1024*1024) != "AUTH OK"):
+        auth_msg: str = self.socket.recv(1024).decode().strip()
+        if (auth_msg != "AUTH OK"):
           self.gui.entry_token["state"] = "normal"
           self.gui.btn_login["state"] = "normal"
           del self.socket
@@ -114,7 +115,7 @@ class ThreadedClient:
   
   def workerThread1(self):
     while self.running:
-      self.queue.put(self.socket.recv())
+      self.queue.put(self.socket.recv(1024*1024*1024))
     self.socket.send("END")
 
 def main():

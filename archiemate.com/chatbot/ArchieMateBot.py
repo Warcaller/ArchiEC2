@@ -85,7 +85,7 @@ def main() -> int:
     
     socket_server.check_sockets()
     for socket in socket_server.sockets:
-      if msg := socket.socket.recv():
+      if msg := socket.socket.recv().strip():
         if not socket.state.get("authenticated", False): # Fresh socket - expect login
           if msg.startswith("AUTH OVERLAY "):
             socket.state["type"] = SocketServer.SocketType.Overlay
