@@ -99,7 +99,7 @@ class ThreadedClient:
         self.gui.entry_token["state"] = "normal"
         self.gui.btn_login["state"] = "normal"
       self.master.after(50, self.periodic_call)
-    elif self.connected and self.queue.size() > 0:
+    elif self.connected and self.queue.qsize() > 0:
       mp3_data = self.queue.get(0)
       sound_data = BytesIO(mp3_data)
       if self.sound is not None:
