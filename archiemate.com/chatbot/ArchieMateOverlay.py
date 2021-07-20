@@ -76,8 +76,8 @@ class ThreadedClient:
       try:
         self.socket = socket.socket()
         self.socket.connect(("3.122.99.185", 7450))
-        self.socket.send(f"AUTH OVERLAY {self.entry_token.get()}".encode())
-        if (self.socket.recv() != "AUTH OK"):
+        self.socket.send(f"AUTH OVERLAY {self.gui.entry_token.get()}".encode())
+        if (self.socket.recv(1024*1024*1024) != "AUTH OK"):
           self.gui.entry_token["state"] = "normal"
           self.gui.btn_login["state"] = "normal"
           del self.socket

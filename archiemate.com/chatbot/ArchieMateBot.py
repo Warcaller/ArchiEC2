@@ -91,13 +91,13 @@ def main() -> int:
             socket.state["type"] = SocketServer.SocketType.Overlay
             if msg == f"AUTH OVERLAY {WEBSITE_SOCKET_AUTH_KEY}":
               socket.state["authenticated"] = True
-              socket.send("AUTH OK")
+              socket.socket.send("AUTH OK")
             else:
               socket.state["dead"] = True
-              socket.send("AUTH NOK")
+              socket.socket.send("AUTH NOK")
           else:
             socket.state["dead"] = True
-            socket.send("AUTH NOK")
+            socket.socket.send("AUTH NOK")
         elif msg == "END":
           socket.state["dead"] = True
     
