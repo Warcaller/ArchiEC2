@@ -88,7 +88,7 @@ def main() -> int:
       if msg := socket.socket.recv().strip():
         if not socket.state.get("authenticated", False): # Fresh socket - expect login
           if msg.startswith("AUTH OVERLAY "):
-            socket.state["type"] = SocketServer.SocketType.Overlay
+            socket.type = SocketServer.SocketType.Overlay
             if msg == f"AUTH OVERLAY {WEBSITE_SOCKET_AUTH_KEY}":
               socket.state["authenticated"] = True
               socket.socket.send("AUTH OK")
@@ -127,7 +127,7 @@ def main() -> int:
             elif ("broadcaster" in priv_msg.badges or "mod" in priv_msg.badges) and command == "test_tts":
               text: str = GoogleCloud.user_text_to_ssml(priv_msg.display_name, arguments)
               audio: bytes = GoogleCloud.ssml_to_audio(text)
-              for socket in socket_server.sockets: #[sock for sock in socket_server.sockets if sock.state.get("type", SocketServer.SocketType.Unknown) == SocketServer.SocketType.Overlay and sock.state.get("authenticated", False) and not sock.state.get("dead", True)]:
+              for socket in [sock for sock in socket_server.sockets if sock.type == SocketServer.SocketType.Overlay and sock.state.get("authenticated", False) and not sock.state.get("dead", True)]:
                 socket.socket.send(audio + b"--END--")
             elif priv_msg.user_id == ARCHI_USER_ID and command == "end":
               done = True
