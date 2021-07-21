@@ -51,7 +51,7 @@ class Poller:
       del self.sockets[socket.fileno()]
   
   def write_to_socket(self, socket: socket.socket, data: bytes):
-    logger.debug(f"Poller.write_to_socket(socket: {socket}, data: '{data}')")
+    logger.debug(f"Poller.write_to_socket(socket: {socket}, data: '{data if len(data) < 1024 else str(len(data)) + ' bytes'}')")
     self.sockets[socket.fileno()].queue_write.put(data)
     self.poller.modify(socket, READ_WRITE)
     self.poll(POLLER_TIMEOUT)
@@ -92,7 +92,7 @@ class Poller:
           logger.debug(f"no more data to send to the socket.")
           self.poller.modify(self.sockets[fd].socket, READ_ONLY)
         else:
-          logger.debug(f"sending data '{next_msg}'")
+          logger.debug(f"sending data '{next_msg if len(next_msg) < 1024 else str(len(next_msg)) + ' bytes'}'")
           bytes_sent: int = 0
           while bytes_sent < len(next_msg):
             try:

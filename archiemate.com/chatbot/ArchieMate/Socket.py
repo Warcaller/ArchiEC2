@@ -16,7 +16,7 @@ class Socket:
     self.poller.add_socket(self.socket)
   
   def send(self, string: Union[str, bytes]):
-    logger.debug(f"Socket.send(string: '{string}')")
+    logger.debug(f"Socket.send(string: '{string if len(string) < 1024 else str(len(string)) + ' bytes'}')")
     string = f"{string.strip()}\r\n" if isinstance(string, str) else string
     self.poller.write_to_socket(self.socket, string.encode() if isinstance(string, str) else string)
   

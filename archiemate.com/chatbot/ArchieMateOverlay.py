@@ -100,14 +100,15 @@ class ThreadedClient:
         self.gui.btn_login["state"] = "normal"
       self.master.after(50, self.periodic_call)
     elif self.connected and self.queue.qsize() > 0:
-      mp3_data = self.queue.get(0)
-      TTS_FILE = "tts.mp3"
+      sound_data = self.queue.get(0)
+      sound_bytes = BytesIO(sound_data)
+      """TTS_FILE = "tts.mp3"
       with open(TTS_FILE, "wb") as mp3_file:
-        mp3_file.write(mp3_data)
+        mp3_file.write(mp3_data)"""
       if self.sound is not None:
         del self.sound
         self.sound = None
-      self.sound = pygame.mixer.Sound(TTS_FILE)
+      self.sound = pygame.mixer.Sound(sound_bytes)
       self.sound.set_volume(0.3)
       sound_length = int(self.sound.get_length() * 1000)
       self.sound.play()
