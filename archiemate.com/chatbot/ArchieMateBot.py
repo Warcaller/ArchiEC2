@@ -127,7 +127,7 @@ def main() -> int:
             elif ("broadcaster" in priv_msg.badges or "mod" in priv_msg.badges) and command == "test_tts":
               text: str = GoogleCloud.user_text_to_ssml(priv_msg.display_name, arguments)
               audio: bytes = GoogleCloud.ssml_to_audio(text)
-              for socket in [sock for sock in socket_server.sockets if sock.state["type"] == SocketServer.SocketType.Overlay and sock.state.get("authenticated", False) and not sock.state.get("dead", True)]:
+              for socket in [sock for sock in socket_server.sockets if sock.state["type"] == SocketServer.SocketType.Overlay and sock.state.get("authenticated", False) and not sock.state.get("dead", False)]:
                 socket.socket.send(audio + b"--END--")
             elif priv_msg.user_id == ARCHI_USER_ID and command == "end":
               done = True
