@@ -36,6 +36,6 @@ def user_text_to_ssml(display_name: str, text: str) -> str:
   logger.debug(f"Lined text: {lined_text}")
   joined_text = f"<emphasis level=\"strong\">{display_name}</emphasis> said:<break time=\"500\"/>{text}"
   logger.debug(f"Joined text: {joined_text}")
-  ssml = f"<speak>{lined_text}</speak>"
+  ssml = f"<speak>{joined_text}</speak>"
   logger.debug(f"Result: '{ssml}'")
   return ssml
