@@ -18,7 +18,11 @@ class Socket:
   def send(self, string: Union[str, bytes]):
     logger.debug(f"Socket.send(string: '{string if len(string) < 1024 else str(len(string)) + ' bytes'}')")
     string = f"{string.strip()}\r\n" if isinstance(string, str) else string
-    self.poller.write_to_socket(self.socket, string.encode() if isinstance(string, str) else string)
+    if isinstance(string, bytes) and len(bytes) > 2048:
+      for chunk in [string[i:i+2048] for i in range(0, len(string), 2048)]:
+        self.poller.write_to_socket(self.socket, chunk)
+    else:
+      self.poller.write_to_socket(self.socket, string.encode() if isinstance(string, str) else string)
   
   def recv(self) -> str:
     logger.debug("Socket.recv()")
