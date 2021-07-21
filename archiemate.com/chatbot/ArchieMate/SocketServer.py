@@ -19,7 +19,6 @@ class SocketType(Enum):
 class SocketServer:
   class SocketInfo(NamedTuple):
     socket: Socket.Socket
-    type: SocketType
     state: Dict[str, Any]
   
   def __init__(self, poller: Poller.Poller):
