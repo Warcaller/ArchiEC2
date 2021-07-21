@@ -98,8 +98,9 @@ class Poller:
             try:
               bytes_sent += self.sockets[fd].socket.send(next_msg[bytes_sent:])
             except BlockingIOError as e:
-              logger.exception(f"socket {self.sockets[fd].socket} is not ready to send more data.")
+              logger.warning(f"socket {self.sockets[fd].socket} is not ready to send more data.")
               self.sockets[fd].queue_write.put(next_msg[bytes_sent:])
+              self.poll(timeout)
   
   def flush(self):
     logger.debug("Poller.flush()")
