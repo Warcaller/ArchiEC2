@@ -16,27 +16,35 @@ class GUI(tk.Frame):
     super().__init__(master)
     self.master = master
     self.queue = queue
+    self.end_command = end_command
     
     self.pack()
     
     self.frame = tk.Frame(self, width=200, height=200)
     self.frame.pack()
     
-    self.entry_token = tk.Entry(self.frame, show="*", width=100)
+    self.entry_token = tk.Entry(self.frame, show="*", width=60)
     self.entry_token.pack(side="top")
     
-    self.btn_login = tk.Button(self.frame, text="Login", fg="blue", bg="white", command=self.btn_login_click)
-    self.btn_login.pack(side="bottom")
+    self.btn_login = tk.Button(self.frame, text="Login", fg="white", bg="blue", command=self.btn_login_click)
+    self.btn_login.pack(side="top")
+    
+    self.btn_exit = tk.Button(self.frame, text="Exit", fg="white", bg="red", command=self.btn_exit_click())
+    self.btn_exit.pack(side="top")
   
   def btn_login_click(self):
     self.entry_token["state"] = "disabled"
     self.btn_login["state"] = "disabled"
     self.queue.put(True)
+  
+  def btn_exit_click(self):
+    self.end_command()
     
 
 class ThreadedClient:
   def __init__(self, master):
     self.master = master
+    self.master.protocol("WM_DELETE_WINDOW", self.end_application)
     self.queue = Queue()
     self.gui = GUI(master, self.queue, self.end_application)
     
@@ -102,9 +110,6 @@ class ThreadedClient:
     elif self.connected and self.queue.qsize() > 0:
       sound_data = self.queue.get(0)
       sound_bytes = BytesIO(sound_data)
-      """TTS_FILE = "tts.mp3"
-      with open(TTS_FILE, "wb") as mp3_file:
-        mp3_file.write(mp3_data)"""
       if self.sound is not None:
         del self.sound
         self.sound = None
@@ -112,7 +117,7 @@ class ThreadedClient:
       self.sound.set_volume(0.3)
       sound_length = int(self.sound.get_length() * 1000)
       self.sound.play()
-      self.master.after(sound_length + 2000)
+      self.master.after(sound_length + 2000, self.periodic_call)
     else:
       self.master.after(50, self.periodic_call)
   
@@ -120,9 +125,15 @@ class ThreadedClient:
     while self.running:
       received_bytes: bytes = b""
       while received_bytes[-7:] != b"--END--":
-        received_bytes += self.socket.recv(1024*1024*1024)
+        new_bytes = self.socket.recv(1024*1024)
+        print(f"Received {len(new_bytes)} bytes")
+        received_bytes += new_bytes
+        print(f"All received bytes: {len(received_bytes)} bytes")
+      print("Done receiving, time to play :-)")
       self.queue.put(received_bytes[:-7])
     self.socket.send("END")
+    self.socket.close()
+    self.socket = None
 
 def main():
   root = tk.Tk()
