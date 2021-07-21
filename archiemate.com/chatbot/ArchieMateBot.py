@@ -114,7 +114,7 @@ def main() -> int:
           
           user: Users.User = users.get_user(priv_msg.user_id, user=priv_msg.user, display_name=priv_msg.display_name)
           user_channel: Users.Channel = user.get_channel(priv_msg.room_id)
-          user_channel.mod = "mod" in priv_msg.badges
+          user_channel.mod = "moderator" in priv_msg.badges
           if priv_msg.room_id not in active_users:
             active_users[priv_msg.room_id] = set()
           if user not in active_users[priv_msg.room_id]:
@@ -122,9 +122,9 @@ def main() -> int:
           
           if detected_command := Commands.detect_command(priv_msg.message):
             chatters, command, arguments = detected_command
-            if ("broadcaster" in priv_msg.badges or "mod" in priv_msg.badges) and command == "command":
+            if ("broadcaster" in priv_msg.badges or "moderator" in priv_msg.badges) and command == "command":
               irc.send_message(f"@{priv_msg.display_name} {Commands.command_function(arguments, priv_msg.room_id, commands)}")
-            elif ("broadcaster" in priv_msg.badges or "mod" in priv_msg.badges) and command == "test_tts":
+            elif ("broadcaster" in priv_msg.badges or "moderator" in priv_msg.badges) and command == "test_tts":
               text: str = GoogleCloud.user_text_to_ssml(priv_msg.display_name, arguments)
               audio: bytes = GoogleCloud.ssml_to_audio(text)
               for socket in [sock for sock in socket_server.sockets if sock.state["type"] == SocketServer.SocketType.Overlay and sock.state.get("authenticated", False) and not sock.state.get("dead", False)]:
