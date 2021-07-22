@@ -61,8 +61,8 @@ def parse_emotes(emotes: Optional[str]) -> Dict[int, List[tuple[int, int]]]:
   return {} if emotes is None or len(emotes) == 0 else {int(one_emote[0]): parse_emote_range(one_emote[1]) for emote in emotes.split("/") if (one_emote := emote.split(":"))}
 
 
-def parse_emote_sets(emote_sets: Optional[str]) -> List[int]:
-  return [] if emote_sets is None or len(emote_sets) == 0 else [int(emote_set) for emote_set in emote_sets.split(",")]
+def parse_emote_sets(emote_sets: Optional[str]) -> List[str]:
+  return [] if emote_sets is None or len(emote_sets) == 0 else [emote_set for emote_set in emote_sets.split(",")]
 
 
 class NoticeMessageId(Enum):
@@ -502,7 +502,7 @@ class GlobalUserState(Message):
     self.badges: Dict[str, int] = parse_badges(tags.get("badges", ""))
     self.color: str = tags.get("color", "")
     self.display_name: str = tags.get("display-name", "")
-    self.emote_sets: List[int] = parse_emote_sets(tags.get("emote-sets", ""))
+    self.emote_sets: List[str] = parse_emote_sets(tags.get("emote-sets", ""))
     self.turbo: Optional[bool] = tags.get("turbo", "-1") == "1" if tags.get("turbo", "-1") != "-1" else None
     self.user_id: int = int(tags.get("user-id", "-1"))
     self.user_type: str = tags.get("user-type", "")
@@ -847,7 +847,7 @@ class UserState(Message):
     self.badges: Dict[str, int] = parse_badges(tags.get("badges", ""))
     self.color: str = tags.get("color", "")
     self.display_name: str = tags.get("display-name", "")
-    self.emote_sets: List[int] = parse_emote_sets(tags.get("emote-sets", ""))
+    self.emote_sets: List[str] = parse_emote_sets(tags.get("emote-sets", ""))
     self.mod: Optional[bool] = tags.get("mod", "-1") == "1" if tags.get("mod", "-1") != "-1" else None
     self.subscriber: Optional[bool] = tags.get("subscriber", "-1") == "1" if tags.get("subscriber", "-1") != "-1" else None
     self.turbo: Optional[bool] = tags.get("turbo", "-1") == "1" if tags.get("turbo", "-1") != "-1" else None
